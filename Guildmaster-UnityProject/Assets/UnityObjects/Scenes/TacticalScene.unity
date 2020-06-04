@@ -197,7 +197,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6dea414bc20b6ef40a0e075304a92a46, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileSprite: {fileID: 21300000, guid: 94741ef4836fe404d910a2307a95a821, type: 3}
 --- !u!1 &623134037
 GameObject:
   m_ObjectHideFlags: 0
@@ -376,7 +375,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df7063745be120f49b92b7364cfd1f02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileSprite: {fileID: 21300000, guid: 94741ef4836fe404d910a2307a95a821, type: 3}
 --- !u!1 &2025032518
 GameObject:
   m_ObjectHideFlags: 0

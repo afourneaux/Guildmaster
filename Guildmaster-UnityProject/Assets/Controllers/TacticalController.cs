@@ -4,24 +4,34 @@ using UnityEngine;
 
 public class TacticalController : MonoBehaviour
 {
-    public Sprite tileSprite; // TODO: Temporary
-    Map map;
+    public static TacticalController instance {get; protected set; }
+    public Map map {
+        get;
+        protected set;
+    }
 
-    void Start() {
-        // TODO: For now, we are auto-running a tactical map on game start. In the future, we'll start the game in Strategic, and finally on in a main menu
-        map = new Map(10, 10);
-        for (int x = 0; x < map.width; x++) {
-            for (int y = 0; y < map.height; y++) {
-                GameObject tileGO = new GameObject();
-                tileGO.name = "Tile_" + x + "_" + y;
-                tileGO.transform.position = new Vector3(x, y, 0);
+    // OnEnable runs before Start, so this ensures this controller initialises before others
+    void OnEnable() {
+        if (instance != null) {
+            Debug.LogError("TacticalController has been initialised twice!");
+        }
+        instance = this;
+        map = new Map(10, 20);  // TODO: Feed in some data structure to generate the map from JSON
+    }
 
-                // TODO: Move to SpriteController
-                SpriteRenderer tileSR = tileGO.AddComponent<SpriteRenderer>();
-                tileSR.sprite = tileSprite;
+    float randomDelay = 2f;
+    float randomCountdown = 2f;
 
-                
+    void Update() {
+        // test updating tile sprites
+        randomCountdown -= Time.deltaTime;
+        if (false && randomCountdown <= 0) {
+            for (int x = 0; x < map.width; x++) {
+                for (int y = 0; y < map.height; y++) {
+                    map.GetTileAt(x, y).sprite = Random.Range(0, 2);
+                }
             }
+            randomCountdown = randomDelay;
         }
     }
 }

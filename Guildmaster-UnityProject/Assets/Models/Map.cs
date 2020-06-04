@@ -1,4 +1,10 @@
+using System;
+
 public class Map {
+    public Action<Tile> onTileGraphicChanged {
+        get; 
+        protected set;
+    }
     public int width {
         get; 
         protected set;
@@ -27,9 +33,11 @@ public class Map {
         tiles = new Tile[w,h];
         spritesheet = ss;
 
+        Random rand = new Random(); // Temporary
+
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
-                tiles[x,y] = new Tile();
+                tiles[x,y] = new Tile(this, 1, 1, rand.Next(0, 2));
                 // TODO: Set up tile data
             }
         }
@@ -37,5 +45,13 @@ public class Map {
 
     public Tile GetTileAt(int x, int y) {
         return tiles[x,y];
+    }
+
+    public void RegisterTileGraphicChangedCallback(Action<Tile> callback) {
+        onTileGraphicChanged += callback;
+    }
+
+    public void UnregisterTileGraphicChangedCallback(Action<Tile> callback) {
+        onTileGraphicChanged -= callback;
     }
 }
