@@ -13,7 +13,7 @@ public class Map {
         get; 
         protected set;
     }
-    // Determines which spritesheet to use. This will map to a file by name of "map_spritesheet_{spritesheet}.png"
+    // TODO: Determines which spritesheet to use. This will map to a file by name of something like "Resources/Visuals/Spritesheet_{spritesheet}"
     public string spritesheet {
         get; 
         protected set;
