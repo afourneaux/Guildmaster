@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameController
+// This controller contains behaviour required at all points in the game
+public class GameController : MonoBehaviour
 {
+    
 }
