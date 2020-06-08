@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// This controller contains Tactical layer logic
 public class TacticalController : MonoBehaviour
 {
     public static TacticalController instance {get; protected set; }

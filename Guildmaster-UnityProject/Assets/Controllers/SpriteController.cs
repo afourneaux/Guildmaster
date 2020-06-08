@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// This controller exists to manage the visual/object layer
+// TODO: Do we want a TacticalSpriteController vs StrategicSpriteController?
 public class SpriteController : MonoBehaviour
 {
     Dictionary<string, Sprite> spritesMap;
