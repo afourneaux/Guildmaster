@@ -1,6 +1,7 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 // This controller exists to manage the visual/object layer
 // TODO: Do we want a TacticalSpriteController vs StrategicSpriteController?
@@ -8,9 +9,11 @@ public class SpriteController : MonoBehaviour
 {
     Dictionary<string, Sprite> spritesMap;
     Dictionary<Tile, GameObject> tileGOMap;
+    Dictionary<Character, GameObject> characterGOMap;
 
     void Start() {
         tileGOMap = new Dictionary<Tile, GameObject>();
+        characterGOMap = new Dictionary<Character, GameObject>();
         Map map = TacticalController.instance.map;
 
         LoadSprites();
@@ -24,12 +27,17 @@ public class SpriteController : MonoBehaviour
                 tileGO.name = "Tile_" + x + "_" + y;
                 tileGO.transform.position = new Vector3(x, y, 0);
                 tileGO.transform.SetParent(this.transform, true);
-                tileGO.AddComponent<SpriteRenderer>();
+                SpriteRenderer tileSR = tileGO.AddComponent<SpriteRenderer>();
+                tileSR.sortingLayerName = "TileMap";
 
                 tileGOMap.Add(map.GetTileAt(x, y), tileGO);
 
                 OnTileGraphicChanged(map.GetTileAt(x, y));
             }
+        }
+
+        foreach (Character chara in map.characters) {
+            CreateCharacter(chara);
         }
     }
 
@@ -59,5 +67,46 @@ public class SpriteController : MonoBehaviour
             Debug.LogError("SpriteController::OnTileGraphicChanged - Sprite not found: " + spriteName);
         }
         tileGO.GetComponent<SpriteRenderer>().sprite = tileSprite;
+    }
+
+    void OnCharacterGraphicChanged(Character chara) {
+        Debug.Log("SpriteController::OnCharacterGraphicChanged");
+
+        GameObject charaGO;
+        if (characterGOMap.TryGetValue(chara, out charaGO) == false) {
+            Debug.LogError("SpriteController::OnCharacterGraphicChanged - Character not found");
+            return;
+        }
+
+        Sprite tileSprite;
+        if (spritesMap.TryGetValue(chara.sprite, out tileSprite) == false) {
+            Debug.LogError("SpriteController::OnCharacterGraphicChanged - Sprite not found: " + chara.sprite);
+        }
+        charaGO.GetComponent<SpriteRenderer>().sprite = tileSprite;
+    }
+
+    void CreateCharacter(Character chara) {
+        string objectName = "Character_" + chara.name.Replace(' ', '_');
+        GameObject charaGO = new GameObject();
+        charaGO.name = objectName;
+        charaGO.transform.position = new Vector3(chara.currentTile.x, chara.currentTile.y, 0);
+        charaGO.transform.SetParent(this.transform, true);
+        SpriteRenderer charaSR = charaGO.AddComponent<SpriteRenderer>();
+        charaSR.sortingLayerName = "Characters";
+        // Create nameplate
+        GameObject textGO = new GameObject();
+        textGO.name = objectName + "_Text";
+        textGO.transform.SetParent(charaGO.transform, false);
+        TextMeshPro textMesh = textGO.AddComponent<TextMeshPro>();
+        textMesh.text = chara.name;
+        textMesh.fontSize = 2;
+        textMesh.fontStyle = FontStyles.Bold;
+        textMesh.alignment = TextAlignmentOptions.Bottom;
+        textMesh.outlineWidth = 0.3f;
+        textMesh.fontSharedMaterial.shaderKeywords = new string[] {"OUTLINE_ON"};
+        textGO.GetComponent<MeshRenderer>().sortingLayerName = "UI";
+        textGO.GetComponent<RectTransform>().sizeDelta = new Vector2(2, 1);
+        characterGOMap.Add(chara, charaGO);
+        OnCharacterGraphicChanged(chara);
     }
 }
