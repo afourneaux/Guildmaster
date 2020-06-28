@@ -43,4 +43,35 @@ public class TacticalController : MonoBehaviour
             randomCountdown = randomDelay;
         }
     }
+
+    // Given a weighted list, randomly select one. For example, in a list of 5, 5, 10
+    // the probability of returning 0 (for the first option) is 25%, the second is 25%,
+    // and the third is 50%.
+    // This will be used by AI deciding their actions based on weighted criteria. Perhaps
+    // a brave unit will have a 5% chance to run away, a 10% chance to take a potion, and
+    // a 85% chance to stand and fight.
+    // What decision each index corresponds to will be tracked by the caller.
+    static int MakeDecision(List<int> options) {
+        if (options == null || options.Count <= 0) {
+            Debug.LogError("TacticalController::MakeDecision - No options provided!");
+            return -1;
+        }
+        int total = 0;
+        foreach (int weight in options) {
+            total += weight;
+        }
+        int selection = Random.Range(0, total);
+        int returnIndex = 0;
+        foreach (int weight in options) {
+            selection -= weight;
+            if (selection <= 0) {
+                return returnIndex;
+            }
+            returnIndex++;
+        }
+
+        // Selection is somehow greater than the sum of the weights in Options on the second pass
+        Debug.LogError("Something went horribly wrong!");
+        return -1;
+    }
 }
