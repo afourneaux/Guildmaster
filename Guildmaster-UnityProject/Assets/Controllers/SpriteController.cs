@@ -18,6 +18,7 @@ public class SpriteController : MonoBehaviour
 
         LoadSprites();
         map.RegisterTileGraphicChangedCallback(OnTileGraphicChanged);
+        map.RegisterCharacterGraphicChangedCallback(OnCharacterGraphicChanged);
         Camera.main.transform.position = new Vector3(map.width / 2, map.height / 2, Camera.main.transform.position.z);
 
         // Create and draw game objects for each tile in the map
@@ -62,11 +63,11 @@ public class SpriteController : MonoBehaviour
 
         // TODO: Get sprite based on spritesheet and index
         string spriteName = tile.sprite == 0 ? "BlankTile" : "EmptyTile"; // test
-        Sprite tileSprite;
-        if (spritesMap.TryGetValue(spriteName, out tileSprite) == false) {
+        Sprite sprite;
+        if (spritesMap.TryGetValue(spriteName, out sprite) == false) {
             Debug.LogError("SpriteController::OnTileGraphicChanged - Sprite not found: " + spriteName);
         }
-        tileGO.GetComponent<SpriteRenderer>().sprite = tileSprite;
+        tileGO.GetComponent<SpriteRenderer>().sprite = sprite;
     }
 
     void OnCharacterGraphicChanged(Character chara) {
@@ -78,11 +79,14 @@ public class SpriteController : MonoBehaviour
             return;
         }
 
-        Sprite tileSprite;
-        if (spritesMap.TryGetValue(chara.sprite, out tileSprite) == false) {
+        // Object location
+        charaGO.transform.position = new Vector3(chara.x, chara.y, 0);
+
+        Sprite sprite;
+        if (spritesMap.TryGetValue(chara.sprite, out sprite) == false) {
             Debug.LogError("SpriteController::OnCharacterGraphicChanged - Sprite not found: " + chara.sprite);
         }
-        charaGO.GetComponent<SpriteRenderer>().sprite = tileSprite;
+        charaGO.GetComponent<SpriteRenderer>().sprite = sprite;
     }
 
     // This effectively replaces grabbing a prefab
@@ -90,7 +94,6 @@ public class SpriteController : MonoBehaviour
         string objectName = "Character_" + chara.name.Replace(' ', '_');
         GameObject charaGO = new GameObject();
         charaGO.name = objectName;
-        charaGO.transform.position = new Vector3(chara.currentTile.x, chara.currentTile.y, 0);
         charaGO.transform.SetParent(this.transform, true);
         SpriteRenderer charaSR = charaGO.AddComponent<SpriteRenderer>();
         charaSR.sortingLayerName = "Characters";

@@ -23,9 +23,12 @@ public class TacticalController : MonoBehaviour
         Character chara1 = new Character("Crimble Nottsworth", map.GetTileAt(map.width / 2, map.height / 2));
         Character chara2 = new Character("Zachary Nottingham", map.GetTileAt((map.width / 2) + 2, map.height / 2));
         Character chara3 = new Character("Dwayne \"The Rock\" Johnson", map.GetTileAt(map.width / 2, (map.height / 2) + 2));
-        map.characters.Add(chara1);
-        map.characters.Add(chara2);
-        map.characters.Add(chara3);
+        chara1.dexterity = 10;
+        chara2.dexterity = 5;
+        chara3.dexterity = 20;
+        map.PlaceCharacter(chara1);
+        map.PlaceCharacter(chara2);
+        map.PlaceCharacter(chara3);
     }
 
     float randomDelay = 2f;
@@ -34,7 +37,7 @@ public class TacticalController : MonoBehaviour
     void Update() {
         // test updating tile sprites
         randomCountdown -= Time.deltaTime;
-        if (false && randomCountdown <= 0) {
+        if (true && randomCountdown <= 0) {
             for (int x = 0; x < map.width; x++) {
                 for (int y = 0; y < map.height; y++) {
                     map.GetTileAt(x, y).sprite = Random.Range(0, 2);

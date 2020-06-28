@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -29,7 +28,7 @@ public class Character {
     int strength;
     int precision;
     int constitution;
-    int dexterity;
+    public int dexterity;
     public string name {
         get;
         protected set;
@@ -43,16 +42,32 @@ public class Character {
             if (_sprite != value) {
                 _sprite = value;
 
-                // TODO: Callback to change graphic when sprite's value changes
-                /*if (map.onTileGraphicChanged != null) {
-                    map.onTileGraphicChanged(this);
-                }*/
+                if (TacticalController.instance.map.onCharacterGraphicChanged != null) {
+                    TacticalController.instance.map.onCharacterGraphicChanged(this);
+                }
             }
         }
+    }
+
+    public float x {
+        get;
+        protected set;
+    }
+    public float y {
+        get;
+        protected set;
     }
     public Tile currentTile {
         get;
         protected set;
+    }
+
+    public void UpdatePosition(float newX, float newY) {
+        if (x != newX || y != newY) {
+            x = newX;
+            y = newY;
+            TacticalController.instance.map.onCharacterGraphicChanged(this);
+        }
     }
 
     // Sample components:
@@ -69,6 +84,8 @@ public class Character {
         currentTile = startTile;
         this.name = name;
         sprite = "knight"; // TODO: Set sprite name
+        x = startTile.x;
+        y = startTile.y;
 
         // DEBUG: Add basic AI behaviour
         onUpdate += AI_Core;
@@ -142,11 +159,102 @@ public class Character {
             return;
         }
 
-        AI_Weights.Add("wander", 2);    // TODO: Base on some personality trait
+        AI_Weights.Add("wander", 8);    // TODO: Base on some personality trait
     }
 
     // Move a few tiles
     public void AI_Wander(Character chara, float deltaTime) {
+        // If a wander is ongoing, continue it
+        if (chara.variables.TryGetValue("AI_wanderSourceTile", out object sourceObj)) {
+            Debug.Log(name + " - continue");
+            Tile source = (Tile) sourceObj;
+
+            // MOVEMENT LOGIC WILL EVENTUALLY BE MOVED SOMEWHERE CENTRAL
+            // Check if the destination is orthogonal or diagonal to the source
+            int movementX = currentTile.x - source.x;
+            int movementY = currentTile.y - source.y;
+            bool isOrthogonal = Math.Abs(movementX) + Math.Abs(movementY) == 1;
+            float speedModifier = 1;
+            if (isOrthogonal == false) {
+                // Move more slowly on diagonals
+                speedModifier = 0.71f;
+            }
+            float newX = chara.x;
+            float newY = chara.y;
+            newX += movementX * speedModifier * (dexterity / 10f) * deltaTime;
+            newY += movementY * speedModifier * (dexterity / 10f) * deltaTime;
+
+            newX = Mathf.Clamp(newX, Mathf.Min(source.x, currentTile.x), Mathf.Max(source.x, currentTile.x) );
+            newY = Mathf.Clamp(newY, Mathf.Min(source.y, currentTile.y), Mathf.Max(source.y, currentTile.y) );
+
+            chara.UpdatePosition(newX, newY);
+
+            if (chara.x == chara.currentTile.x && chara.y == chara.currentTile.y) {
+                Debug.Log(name + " - end");
+                variables.Remove("AI_wanderSourceTile");
+                variables.Remove("AI_runningFunction");
+            }
+        } else {
+            Debug.Log(name + " - start");
+            // First, check for available adjacent tiles to move to
+            Map map = chara.currentTile.map;
+            Tile checkTile;
+            List<Tile> directions = new List<Tile>();
+            // N
+            checkTile = map.GetTileAt(chara.currentTile.x, chara.currentTile.y + 1);
+            if (checkTile != null && checkTile.character == null) {
+                directions.Add(checkTile);
+            }
+            // NE
+            checkTile = map.GetTileAt(chara.currentTile.x + 1, chara.currentTile.y + 1);
+            if (checkTile != null && checkTile.character == null) {
+                directions.Add(checkTile);
+            }
+            // E
+            checkTile = map.GetTileAt(chara.currentTile.x + 1, chara.currentTile.y);
+            if (checkTile != null && checkTile.character == null) {
+                directions.Add(checkTile);
+            }
+            // SE
+            checkTile = map.GetTileAt(chara.currentTile.x + 1, chara.currentTile.y - 1);
+            if (checkTile != null && checkTile.character == null) {
+                directions.Add(checkTile);
+            }
+            // S
+            checkTile = map.GetTileAt(chara.currentTile.x, chara.currentTile.y - 1);
+            if (checkTile != null && checkTile.character == null) {
+                directions.Add(checkTile);
+            }
+            // SW
+            checkTile = map.GetTileAt(chara.currentTile.x - 1, chara.currentTile.y - 1);
+            if (checkTile != null && checkTile.character == null) {
+                directions.Add(checkTile);
+            }
+            // W
+            checkTile = map.GetTileAt(chara.currentTile.x - 1, chara.currentTile.y);
+            if (checkTile != null && checkTile.character == null) {
+                directions.Add(checkTile);
+            }
+            // NW
+            checkTile = map.GetTileAt(chara.currentTile.x - 1, chara.currentTile.y + 1);
+            if (checkTile != null && checkTile.character == null) {
+                directions.Add(checkTile);
+            }
+            // Then, randomly choose one
+            if (directions.Count <= 0) {
+                // If no directions are possible, bail out
+                return;
+            }
+            int choice = UnityEngine.Random.Range(0, directions.Count);
+            Tile destination = directions[choice];
+            destination.character = this;
+            chara.variables.Add("AI_wanderSourceTile", chara.currentTile);
+            chara.variables.Add("AI_runningFunction", (Action<Character, float>) AI_Wander);
+            chara.currentTile.character = null;
+            chara.currentTile = destination;
+        }
+
+        /*
         if (variables.TryGetValue("AI_timeWandering", out object timeObj)) {
             float time = (float) timeObj;
             time -= deltaTime;
@@ -161,7 +269,7 @@ public class Character {
             variables.Add("AI_timeWandering", 3 - deltaTime);  // Wander for 3 seconds
             variables.Add("AI_runningFunction", (Action<Character, float>) AI_Wander);
             Debug.Log("ACTION: " + name + " begins wandering" + " - " + Time.time);
-        }
+        }*/
     }
 
     // Weigh the probability of selecting the Rest option based on the current context
@@ -173,7 +281,7 @@ public class Character {
             return;
         }
 
-        AI_Weights.Add("rest", 8);    // TODO: Base on some personality trait
+        AI_Weights.Add("rest", 20);    // TODO: Base on some personality trait
     }
 
     // Stand in place
@@ -182,16 +290,16 @@ public class Character {
             float time = (float) timeObj;
             time -= deltaTime;
             if (time <= 0) {
-                Debug.Log("ACTION: " + name + " finishes their rest" + " - " + Time.time);
+                //Debug.Log("ACTION: " + name + " finishes their rest" + " - " + Time.time);
                 variables.Remove("AI_timeResting");
                 variables.Remove("AI_runningFunction");
             } else {
                 variables["AI_timeResting"] = time;
             }
         } else {
-            variables.Add("AI_timeResting", 5 - deltaTime);  // Rest for 5 seconds
+            variables.Add("AI_timeResting", 1 - deltaTime);  // Rest for 1 second
             variables.Add("AI_runningFunction", (Action<Character, float>) AI_Rest);
-            Debug.Log("ACTION: " + name + " begins resting" + " - " + Time.time);
+            //Debug.Log("ACTION: " + name + " begins resting" + " - " + Time.time);
         }
     }
 }

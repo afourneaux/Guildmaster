@@ -42,6 +42,8 @@ public class Tile {
         }
     }
 
+    public Character character;
+
     // TODO: Some extra functionality like Cover, Secret, etc etc etc we'll worry about that later
 
     public Tile(Map m, int x, int y, int cte = 1, int ctl = 1, int s = 0) {
