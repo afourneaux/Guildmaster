@@ -108,16 +108,16 @@ public class Character {
             // Check if the destination is orthogonal or diagonal to the source
             int movementX = chara.currentTile.x - source.x;
             int movementY = chara.currentTile.y - source.y;
-            bool isOrthogonal = Math.Abs(movementX) + Math.Abs(movementY) == 1;
-            float speedModifier = 1;
-            if (isOrthogonal == false) {
+            bool isDiagonal = Math.Abs(movementX) + Math.Abs(movementY) != 1;
+            float diagonalModifier = 1;
+            if (isDiagonal == false) {
                 // Move more slowly on diagonals
-                speedModifier = 0.71f;
+                diagonalModifier = 0.71f; // 1 / Sqrt(2), because Sqrt() is expensive
             }
             float newX = chara.x;
             float newY = chara.y;
-            newX += movementX * speedModifier * (chara.dexterity / 10f) * deltaTime * source.costToLeave * currentTile.costToEnter;
-            newY += movementY * speedModifier * (chara.dexterity / 10f) * deltaTime * source.costToLeave * currentTile.costToEnter;
+            newX += movementX * diagonalModifier * (chara.dexterity / 10f) * deltaTime * source.costToLeave * currentTile.costToEnter;
+            newY += movementY * diagonalModifier * (chara.dexterity / 10f) * deltaTime * source.costToLeave * currentTile.costToEnter;
 
             newX = Mathf.Clamp(newX, Mathf.Min(source.x, chara.currentTile.x), Mathf.Max(source.x, chara.currentTile.x) );
             newY = Mathf.Clamp(newY, Mathf.Min(source.y, chara.currentTile.y), Mathf.Max(source.y, chara.currentTile.y) );
