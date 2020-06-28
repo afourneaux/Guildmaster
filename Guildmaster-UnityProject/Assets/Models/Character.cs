@@ -99,11 +99,10 @@ public class Character {
             Debug.LogError("Character::Move - " + name + " has been assigned to move to a non-adjacent tile!");
             return;
         }
-        
+
         destination.character = this;
         variables.Add("sourceTile", currentTile);
-        currentTile.character = null;
-        currentTile = destination;
+        UpdateTile(destination);
     }
 
     void Move(Character chara, float deltaTime) {
@@ -134,5 +133,10 @@ public class Character {
             y = newY;
             TacticalController.instance.map.onCharacterGraphicChanged(this);
         }
+    }
+
+    public void UpdateTile(Tile newTile) {
+        currentTile.character = null;
+        currentTile = newTile;
     }
 }

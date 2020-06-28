@@ -53,8 +53,6 @@ public class SpriteController : MonoBehaviour
     }
 
     void OnTileGraphicChanged(Tile tile) {
-        Debug.Log("SpriteController::OnTileGraphicChanged");
-
         GameObject tileGO;
         if (tileGOMap.TryGetValue(tile, out tileGO) == false) {
             Debug.LogError("SpriteController::OnTileGraphicChanged - Tile not found");
@@ -71,8 +69,6 @@ public class SpriteController : MonoBehaviour
     }
 
     void OnCharacterGraphicChanged(Character chara) {
-        Debug.Log("SpriteController::OnCharacterGraphicChanged");
-
         GameObject charaGO;
         if (characterGOMap.TryGetValue(chara, out charaGO) == false) {
             Debug.LogError("SpriteController::OnCharacterGraphicChanged - Character not found");

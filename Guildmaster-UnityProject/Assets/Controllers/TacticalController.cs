@@ -67,7 +67,7 @@ public class TacticalController : MonoBehaviour
         foreach (int weight in options) {
             total += weight;
         }
-        int selection = Random.Range(0, total);
+        int selection = Random.Range(0, total + 1);
         int returnIndex = 0;
         foreach (int weight in options) {
             selection -= weight;

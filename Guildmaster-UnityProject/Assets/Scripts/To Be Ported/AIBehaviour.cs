@@ -15,10 +15,12 @@ public class AIBehaviour {
         AI_WeighOptions += AI_ClearWeights;
         AI_WeighOptions += AI_WeighWander;
         AI_WeighOptions += AI_WeighRest;
+        AI_WeighOptions += AI_WeighTeleport;
 
         AI_Behaviours = new Dictionary<string, Action<Character, float>>();
         AI_Behaviours.Add("wander", AI_Wander);
         AI_Behaviours.Add("rest", AI_Rest);
+        AI_Behaviours.Add("teleport", AI_Teleport);
 
         chara.variables.Add("AI_ConfigurationSet", true);
     }
@@ -63,7 +65,7 @@ public class AIBehaviour {
             return;
         }
 
-        AI_Weights.Add("wander", 8);    // TODO: Base on some personality trait
+        AI_Weights.Add("wander", 10);    // TODO: Base on some personality trait
     }
 
     // Move a few tiles
@@ -158,7 +160,7 @@ public class AIBehaviour {
             return;
         }
 
-        AI_Weights.Add("rest", 20);    // TODO: Base on some personality trait
+        AI_Weights.Add("rest", 5);    // TODO: Base on some personality trait
     }
 
     // Stand in place
@@ -174,9 +176,43 @@ public class AIBehaviour {
                 chara.variables["AI_timeResting"] = time;
             }
         } else {
-            chara.variables.Add("AI_timeResting", 1 - deltaTime);  // Rest for 1 second
+            chara.variables.Add("AI_timeResting", 1f);  // Rest for 1 second
             chara.variables.Add("AI_runningFunction", (Action<Character, float>) AI_Rest);
             //Debug.Log("ACTION: " + name + " begins resting" + " - " + Time.time);
+        }
+    }
+
+    // DEBUG: Just a sample
+    public void AI_WeighTeleport(Character chara) {
+        if (AI_Weights.ContainsKey("teleport")) {
+            // Should we allow this, and overwrite the previous value?
+            // Until we have a use case, just error out
+            Debug.LogError("Trying to weigh the Teleport AI twice for character: " + chara.name);
+            return;
+        }
+
+        AI_Weights.Add("teleport", 1);    // TODO: Base on some personality trait
+    }
+
+    // DEBUG: Just a sample
+    // Teleport to a random space on the grid, then wait for 2 seconds
+    public void AI_Teleport(Character chara, float deltaTime) {
+        if (chara.variables.TryGetValue("AI_teleportCooldown", out object timeObj)) {
+            float time = (float) timeObj;
+            time -= deltaTime;
+            if (time <= 0) {
+                chara.variables.Remove("AI_teleportCooldown");
+                chara.variables.Remove("AI_runningFunction");
+            } else {
+                chara.variables["AI_teleportCooldown"] = time;
+            }
+        } else {
+            int x = UnityEngine.Random.Range(0, TacticalController.instance.map.width);
+            int y = UnityEngine.Random.Range(0, TacticalController.instance.map.height);
+            chara.UpdatePosition(x, y);
+            chara.UpdateTile(TacticalController.instance.map.GetTileAt(x, y));
+            chara.variables.Add("AI_teleportCooldown", 2f);  // Rest for 2 seconds
+            chara.variables.Add("AI_runningFunction", (Action<Character, float>) AI_Teleport);
         }
     }
 }
