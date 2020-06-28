@@ -69,10 +69,8 @@ public class AIBehaviour {
     // Move a few tiles
     public void AI_Wander(Character chara, float deltaTime) {
         if (chara.variables.TryGetValue("AI_wandering", out object wanderingObj) && (bool) wanderingObj == true) {
-            Debug.Log("Wandering");
             // If a wander is ongoing, continue it
             if (chara.variables.TryGetValue("sourceTile", out object sourceObj) == false || sourceObj == null) {
-                Debug.Log("Stopped wandering");
                 chara.variables.Remove("AI_wandering");
                 chara.variables.Remove("AI_runningFunction");
             }

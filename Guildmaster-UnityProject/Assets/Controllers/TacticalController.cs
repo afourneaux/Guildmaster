@@ -37,7 +37,7 @@ public class TacticalController : MonoBehaviour
     void Update() {
         // test updating tile sprites
         randomCountdown -= Time.deltaTime;
-        if (true && randomCountdown <= 0) {
+        if (false && randomCountdown <= 0) {
             for (int x = 0; x < map.width; x++) {
                 for (int y = 0; y < map.height; y++) {
                     map.GetTileAt(x, y).sprite = Random.Range(0, 2);
