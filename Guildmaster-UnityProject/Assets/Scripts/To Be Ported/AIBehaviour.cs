@@ -207,10 +207,18 @@ public class AIBehaviour {
                 chara.variables["AI_teleportCooldown"] = time;
             }
         } else {
-            int x = UnityEngine.Random.Range(0, TacticalController.instance.map.width);
-            int y = UnityEngine.Random.Range(0, TacticalController.instance.map.height);
+            int x;
+            int y;
+            Tile tile;
+            do {
+                // Terrible implementation due to highly random run time, and possibility of infinite loops
+                // but it serves as a debug
+                x = UnityEngine.Random.Range(0, TacticalController.instance.map.width);
+                y = UnityEngine.Random.Range(0, TacticalController.instance.map.height);
+                tile = TacticalController.instance.map.GetTileAt(x, y);
+            } while (tile.character != null);
             chara.UpdatePosition(x, y);
-            chara.UpdateTile(TacticalController.instance.map.GetTileAt(x, y));
+            chara.UpdateTile(tile);
             chara.variables.Add("AI_teleportCooldown", 2f);  // Rest for 2 seconds
             chara.variables.Add("AI_runningFunction", (Action<Character, float>) AI_Teleport);
         }
