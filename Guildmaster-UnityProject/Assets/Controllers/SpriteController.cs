@@ -105,6 +105,7 @@ public class SpriteController : MonoBehaviour
         textMesh.outlineWidth = 0.3f;
         textMesh.fontSharedMaterial.shaderKeywords = new string[] {"OUTLINE_ON"};
         textGO.GetComponent<MeshRenderer>().sortingLayerName = "UI";
+        // Allow text to bleed halfway into other tiles
         textGO.GetComponent<RectTransform>().sizeDelta = new Vector2(2, 1);
         characterGOMap.Add(chara, charaGO);
         OnCharacterGraphicChanged(chara);
