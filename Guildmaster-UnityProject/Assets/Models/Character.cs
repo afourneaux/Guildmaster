@@ -90,6 +90,16 @@ public class Character {
     }
 
     public void BeginMove(Tile destination) {
+        if (currentTile.x == destination.x && currentTile.y == destination.y) {
+            Debug.LogError("Character::Move - " + name + " has been assigned to move to its current tile!");
+            return;
+        }
+
+        if (Math.Abs(currentTile.x - destination.x) > 1 || Math.Abs(currentTile.y - destination.y) > 1) {
+            Debug.LogError("Character::Move - " + name + " has been assigned to move to a non-adjacent tile!");
+            return;
+        }
+        
         destination.character = this;
         variables.Add("sourceTile", currentTile);
         currentTile.character = null;
