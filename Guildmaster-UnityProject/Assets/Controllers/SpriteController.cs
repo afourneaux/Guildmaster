@@ -85,6 +85,7 @@ public class SpriteController : MonoBehaviour
         charaGO.GetComponent<SpriteRenderer>().sprite = tileSprite;
     }
 
+    // This effectively replaces grabbing a prefab
     void CreateCharacter(Character chara) {
         string objectName = "Character_" + chara.name.Replace(' ', '_');
         GameObject charaGO = new GameObject();

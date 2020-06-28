@@ -42,6 +42,10 @@ public class TacticalController : MonoBehaviour
             }
             randomCountdown = randomDelay;
         }
+
+        foreach(Character chara in map.characters) {
+            chara.Update(Time.deltaTime);
+        }
     }
 
     // Given a weighted list, randomly select one. For example, in a list of 5, 5, 10
@@ -51,7 +55,7 @@ public class TacticalController : MonoBehaviour
     // a brave unit will have a 5% chance to run away, a 10% chance to take a potion, and
     // a 85% chance to stand and fight.
     // What decision each index corresponds to will be tracked by the caller.
-    static int MakeDecision(List<int> options) {
+    public static int MakeDecision(List<int> options) {
         if (options == null || options.Count <= 0) {
             Debug.LogError("TacticalController::MakeDecision - No options provided!");
             return -1;
