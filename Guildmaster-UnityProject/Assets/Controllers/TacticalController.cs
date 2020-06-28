@@ -18,6 +18,14 @@ public class TacticalController : MonoBehaviour
         }
         instance = this;
         map = new Map(10, 20);  // TODO: Feed in some data structure to generate the map from JSON
+        
+        // Generate a sample character
+        Character chara1 = new Character("Crimble Nottsworth", map.GetTileAt(map.width / 2, map.height / 2));
+        Character chara2 = new Character("Zachary Nottingham", map.GetTileAt((map.width / 2) + 2, map.height / 2));
+        Character chara3 = new Character("Dwayne \"The Rock\" Johnson", map.GetTileAt(map.width / 2, (map.height / 2) + 2));
+        map.characters.Add(chara1);
+        map.characters.Add(chara2);
+        map.characters.Add(chara3);
     }
 
     float randomDelay = 2f;

@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 
 public class Map {
+    public List<Character> characters;
     public Action<Tile> onTileGraphicChanged {
         get; 
         protected set;
@@ -32,12 +34,13 @@ public class Map {
         height = h;
         tiles = new Tile[w,h];
         spritesheet = ss;
+        characters = new List<Character>();
 
         Random rand = new Random(); // Temporary
 
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
-                tiles[x,y] = new Tile(this, 1, 1, rand.Next(0, 2));
+                tiles[x,y] = new Tile(this, x, y, 1, 1, rand.Next(0, 2));
                 // TODO: Set up tile data
             }
         }

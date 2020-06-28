@@ -3,6 +3,14 @@ public class Tile {
         get;
         protected set;
     }
+    public int x {
+        get;
+        protected set;
+    }
+    public int y {
+        get;
+        protected set;
+    }
 
     // Movement cost multipliers
     // Cost of 0.5 = characters move at double speed when entering/leaving the tile
@@ -36,10 +44,12 @@ public class Tile {
 
     // TODO: Some extra functionality like Cover, Secret, etc etc etc we'll worry about that later
 
-    public Tile(Map m, int cte = 1, int ctl = 1, int s = 0) {
+    public Tile(Map m, int x, int y, int cte = 1, int ctl = 1, int s = 0) {
         map = m;
         costToEnter = cte;
         costToLeave = ctl;
         sprite = s;
+        this.x = x;
+        this.y = y;
     }
 }

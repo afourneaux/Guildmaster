@@ -41,3 +41,24 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: TileMap
+    uniqueID: 13337151
+    locked: 0
+  - name: EffectsUnderlay
+    uniqueID: 920575939
+    locked: 0
+  - name: MapFeatures
+    uniqueID: 3849679859
+    locked: 0
+  - name: Characters
+    uniqueID: 2854669023
+    locked: 0
+  - name: EffectsOverlay
+    uniqueID: 3575211111
+    locked: 0
+  - name: Ceiling
+    uniqueID: 1416997913
+    locked: 0
+  - name: UI
+    uniqueID: 3647704091
+    locked: 0
