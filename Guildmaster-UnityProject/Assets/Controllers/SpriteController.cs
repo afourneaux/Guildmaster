@@ -5,6 +5,10 @@ using TMPro;
 
 // This controller exists to manage the visual/object layer
 // TODO: Do we want a TacticalSpriteController vs StrategicSpriteController?
+public enum Colour {
+    CLEAR, WHITE, BLACK, GREY, RED, GREEN, BLUE, MAGENTA, YELLOW, CYAN
+}
+
 public class SpriteController : MonoBehaviour
 {
     Dictionary<string, Sprite> spritesMap;
@@ -105,9 +109,48 @@ public class SpriteController : MonoBehaviour
         textMesh.outlineWidth = 0.3f;
         textMesh.fontSharedMaterial.shaderKeywords = new string[] {"OUTLINE_ON"};
         textGO.GetComponent<MeshRenderer>().sortingLayerName = "UI";
+
+        // Colour the text based on allegiance
+        Color TMPColor;
+        if (chara.currentTile.map.allegianceColours.TryGetValue(chara.allegiance, out Colour colour)) {
+            TMPColor = ColourToTMPColor(colour);
+        } else {
+            // Default to white if none found
+            TMPColor = Color.white;
+        }
+        textMesh.color = TMPColor;
+        
         // Allow text to bleed halfway into other tiles
         textGO.GetComponent<RectTransform>().sizeDelta = new Vector2(2, 1);
         characterGOMap.Add(chara, charaGO);
         OnCharacterGraphicChanged(chara);
+    }
+
+    Color ColourToTMPColor(Colour colour) {
+        switch (colour) {
+            case Colour.CLEAR:
+                return Color.clear;
+            case Colour.BLACK:
+                return Color.black;
+            case Colour.WHITE:
+                return Color.white;
+            case Colour.GREY:
+                return Color.grey;
+            case Colour.RED:
+                return Color.red;
+            case Colour.GREEN:
+                return Color.green;
+            case Colour.BLUE:
+                return Color.blue;
+            case Colour.MAGENTA:
+                return Color.magenta;
+            case Colour.YELLOW:
+                return Color.yellow;
+            case Colour.CYAN:
+                return Color.cyan;
+            default:
+                Debug.LogError("Unrecognised colour: " + colour.ToString());
+                return Color.clear;
+        }
     }
 }

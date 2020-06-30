@@ -70,6 +70,9 @@ public class Character {
         protected set;
     }
 
+    // All characters of the same allegiance are on the same side in this conflict
+    public int allegiance;
+
     // Sample components:
     // Exploration AI
     // Combat
@@ -78,14 +81,14 @@ public class Character {
     // Social encounters
     // Speech
 
-    public Character(string name, Tile startTile) {
+    public Character(string name, Tile startTile, int allegiance) {
         variables = new Dictionary<string, object>();
         currentTile = startTile;
         this.name = name;
-        sprite = "knight"; // TODO: Set sprite name
         x = startTile.x;
         y = startTile.y;
         currentBehaviour = "deciding";
+        this.allegiance = allegiance;
 
         AIBehaviours = new Dictionary<string, Action<Character, float>>();
         AIWeights = new Dictionary<string, int>();
