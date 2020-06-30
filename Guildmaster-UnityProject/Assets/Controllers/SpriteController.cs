@@ -119,7 +119,7 @@ public class SpriteController : MonoBehaviour
             TMPColor = Color.white;
         }
         textMesh.color = TMPColor;
-        
+
         // Allow text to bleed halfway into other tiles
         textGO.GetComponent<RectTransform>().sizeDelta = new Vector2(2, 1);
         characterGOMap.Add(chara, charaGO);

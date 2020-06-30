@@ -14,6 +14,15 @@ using UnityEngine;
 // As a super cool bonus, this also makes it really easy to implement modding, since we can
 // parse more components from text files. That's a stretch goal though
 
+public enum BehaviourState {
+    IDLE,
+    EXPLORING,
+    RESTING,
+    COMBAT,
+    FLEEING,
+    SOCIAL
+}
+
 public class Character {
     // Tracks variables and their values from components
     public Dictionary<string, object> variables;
@@ -30,13 +39,27 @@ public class Character {
     // The AI behaviour which is currently active
     public string currentBehaviour;
 
+    private BehaviourState _behaviourState;
+    public BehaviourState behaviourState {
+        get {
+            return _behaviourState;
+        }
+        set {
+            if (_behaviourState != value) {
+                _behaviourState = value;
+                timeSinceLastBehaviourChange = 0;
+            }
+        }
+    }
+    public float timeSinceLastBehaviourChange;
+
     // These base stats will be shared by all Characters, so they are not in a component.
     // TODO: Should stats be saved some other way? A data structure perchance?
     // TODO: Comment a brief mention of what each stat is used for when design is more solid
-    int strength;
-    int precision;
-    int constitution;
-    public int dexterity;
+    int strength; // damage
+    int precision; // accuracy
+    int constitution; // HP
+    public int dexterity; // move speed
     public string name {
         get;
         protected set;
@@ -65,6 +88,7 @@ public class Character {
         get;
         protected set;
     }
+
     public Tile currentTile {
         get;
         protected set;
@@ -88,6 +112,7 @@ public class Character {
         x = startTile.x;
         y = startTile.y;
         currentBehaviour = "deciding";
+        behaviourState = BehaviourState.IDLE;
         this.allegiance = allegiance;
 
         AIBehaviours = new Dictionary<string, Action<Character, float>>();
@@ -106,18 +131,22 @@ public class Character {
 
     public void BeginMove(Tile destination) {
         if (currentTile.x == destination.x && currentTile.y == destination.y) {
-            Debug.LogError("Character::Move - " + name + " has been assigned to move to its current tile!");
+            Debug.LogError("Character::BeginMove - " + name + " has been assigned to move to its current tile!");
             return;
         }
 
         if (Math.Abs(currentTile.x - destination.x) > 1 || Math.Abs(currentTile.y - destination.y) > 1) {
-            Debug.LogError("Character::Move - " + name + " has been assigned to move to a non-adjacent tile!");
+            Debug.LogError("Character::BeginMove - " + name + " has been assigned to move to a non-adjacent tile!");
             return;
         }
+        if (destination.character != null) {
+            Debug.LogError("Character::BeginMove - " + name + " has been assigned an occupied tile! Allowing the move");
+        }
 
-        destination.character = this;
+        currentTile.character = null;
         variables.Add("sourceTile", currentTile);
-        SetTile(destination);
+        currentTile = destination;
+        currentTile.character = this;
     }
 
     void Move(float deltaTime) {
@@ -150,9 +179,18 @@ public class Character {
         }
     }
 
-    public void SetTile(Tile newTile) {
+    public void SetTile(Tile destination) {
+        if (destination.character != null) {
+            Debug.LogError("Character::SetTile - " + name + " has been assigned an occupied tile! Allowing the move");
+        }
+
         currentTile.character = null;
-        currentTile = newTile;
+        currentTile = destination;
+        currentTile.character = this;
+    }
+
+    public void UpdateBehaviourState(float deltaTime) {
+
     }
 
     // Run the current AI behaviour
