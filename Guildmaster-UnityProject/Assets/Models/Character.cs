@@ -47,6 +47,7 @@ public class Character {
             if (_behaviourState != value) {
                 _behaviourState = value;
                 timeSinceLastBehaviourChange = 0;
+                Debug.Log(name + " changing to behaviour - " + _behaviourState.ToString());
             }
         }
     }
@@ -236,7 +237,7 @@ public class Character {
             behaviourState = BehaviourState.COMBAT;
             return;
         }
-        
+
         // If there are no noticed enemies, continue with Explore
         behaviourState = BehaviourState.EXPLORING;
         return;

@@ -27,8 +27,12 @@ public class WanderBehaviour {
             Debug.LogError("Trying to weigh the Wander AI twice for character: " + chara.name);
             return;
         }
+        int weight = 0;
+        if (chara.behaviourState == BehaviourState.EXPLORING) {
+            weight = 10;
+        }
 
-        chara.AIWeights.Add("wander", 10);    // TODO: Base on some personality trait
+        chara.AIWeights.Add("wander", weight);    // TODO: Base on some personality trait
     }
 
     // Move a few tiles
@@ -106,8 +110,15 @@ public class WanderBehaviour {
             Debug.LogError("Trying to weigh the Rest AI twice for character: " + chara.name);
             return;
         }
+        int weight = 0;
+        if (chara.behaviourState == BehaviourState.EXPLORING) {
+            weight = 5;
+        }
+        if (chara.behaviourState == BehaviourState.RESTING) {
+            weight = 10;
+        }
 
-        chara.AIWeights.Add("rest", 5);    // TODO: Base on some personality trait
+        chara.AIWeights.Add("rest", weight);    // TODO: Base on some personality trait
     }
 
     // Stand in place
