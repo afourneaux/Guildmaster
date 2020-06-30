@@ -15,7 +15,6 @@ using UnityEngine;
 // parse more components from text files. That's a stretch goal though
 
 public enum BehaviourState {
-    IDLE,
     EXPLORING,
     RESTING,
     COMBAT,
@@ -27,7 +26,7 @@ public class Character {
     // Tracks variables and their values from components
     public Dictionary<string, object> variables;
     // Tracks functions to run on Update() for each component
-    Action<float> onUpdate;
+    Action<Character, float> onUpdate;
 
     // AI logic
     // Tracks the many AI actions that can be taken
@@ -38,7 +37,7 @@ public class Character {
     public Dictionary<string, Action<Character>> AIWeighOptions;
     // The AI behaviour which is currently active
     public string currentBehaviour;
-
+    // The general attitude of the character
     private BehaviourState _behaviourState;
     public BehaviourState behaviourState {
         get {
@@ -53,13 +52,19 @@ public class Character {
     }
     public float timeSinceLastBehaviourChange;
 
+    Dictionary<Character, float> noticedCharacters;
+    public List<Character> noticedBy;
+
     // These base stats will be shared by all Characters, so they are not in a component.
     // TODO: Should stats be saved some other way? A data structure perchance?
     // TODO: Comment a brief mention of what each stat is used for when design is more solid
-    int strength; // damage
-    int precision; // accuracy
-    int constitution; // HP
+    public int strength; // damage
+    public int precision; // accuracy
+    public int constitution; // HP
     public int dexterity; // move speed
+    public int perception; // Noticing distance
+    public int intelligence; // How long before forgetting someone
+    public int bravery;
     public string name {
         get;
         protected set;
@@ -103,7 +108,7 @@ public class Character {
     // Awareness (stealth, noticing)
     // HP and dying
     // Social encounters
-    // Speech
+    // Speech bubbles and voice acting
 
     public Character(string name, Tile startTile, int allegiance) {
         variables = new Dictionary<string, object>();
@@ -112,20 +117,25 @@ public class Character {
         x = startTile.x;
         y = startTile.y;
         currentBehaviour = "deciding";
-        behaviourState = BehaviourState.IDLE;
+        behaviourState = BehaviourState.EXPLORING;
         this.allegiance = allegiance;
 
         AIBehaviours = new Dictionary<string, Action<Character, float>>();
         AIWeights = new Dictionary<string, int>();
         AIWeighOptions = new Dictionary<string, Action<Character>>();
 
-        onUpdate += Move;
-        onUpdate += UpdateAI;
+        noticedCharacters = new Dictionary<Character, float>();
+        noticedBy = new List<Character>();
+
+        RegisterOnUpdate(UpdateMove);
+        RegisterOnUpdate(UpdateNotice);
+        RegisterOnUpdate(UpdateBehaviourState);
+        RegisterOnUpdate(UpdateAI);
     }
 
     public void Update(float deltaTime) {
         if (onUpdate != null) {
-            onUpdate(deltaTime);
+            onUpdate(this, deltaTime);
         }
     }
 
@@ -149,7 +159,7 @@ public class Character {
         currentTile.character = this;
     }
 
-    void Move(float deltaTime) {
+    void UpdateMove(Character chara, float deltaTime) {
         if (variables.TryGetValue("sourceTile", out object sourceObj)) {
             Tile source = (Tile) sourceObj;
             if ((source == currentTile) || (x == currentTile.x && y == currentTile.y)) {
@@ -189,19 +199,61 @@ public class Character {
         currentTile.character = this;
     }
 
-    public void UpdateBehaviourState(float deltaTime) {
+    // Change the current behaviour state based on the current context
+    public void UpdateBehaviourState(Character chara, float deltaTime) {
+        bool enemiesNearby = false;
+        bool alliesNearby = false;
+        // Take stock of surrounding characters
+        foreach (Character other in noticedCharacters.Keys) {
+            // TODO: Determine something like "hostile" or "neutral" relationships between allegiances on the Map level
+            // For now, assume all other allegiances are hostile
+            if (other.allegiance == allegiance) {
+                alliesNearby = true;
+            } else {
+                enemiesNearby = true;
+            }
+        }
+        // If this character started fleeing, keep fleeing for a while
+        // Speed up the flee timer if no enemies are seen
+        if (behaviourState == BehaviourState.FLEEING) {
+            float recoveryModifier = 1f;
+            if (alliesNearby) {
+                recoveryModifier += 0.5f;
+            }
+            if (enemiesNearby) {
+                recoveryModifier -= 0.5f;
+            }
+            timeSinceLastBehaviourChange += deltaTime * recoveryModifier;
 
+            if (timeSinceLastBehaviourChange <= 100 / bravery) { // TODO: More sophisticated system
+                behaviourState = BehaviourState.FLEEING;
+                return;
+            }
+        }
+
+        // If there are nearby enemies, go to Combat
+        if (enemiesNearby) {
+            behaviourState = BehaviourState.COMBAT;
+            return;
+        }
+        
+        // If there are no noticed enemies, continue with Explore
+        behaviourState = BehaviourState.EXPLORING;
+        return;
+
+        // If there are nearby social encounters, go to Social (not implemented)
+        // If the Guildmaster has called for a rest, go to Resting (not implemented)
     }
 
     // Run the current AI behaviour
-    public void UpdateAI(float deltaTime) {
+    public void UpdateAI(Character chara, float deltaTime) {
         // If the AI is deciding, get a new behaviour
         if (currentBehaviour == "deciding") {
             // Clear existing weights
             AIWeights = new Dictionary<string, int>();
             // Calculate the weight of each decision based on the current context
             foreach (Action<Character> weighOption in AIWeighOptions.Values) {
-                weighOption(this);
+                weighOption(chara);
             }
             // Convert the weights into an indexed list
             List<int> options = new List<int>();
@@ -220,7 +272,41 @@ public class Character {
             currentBehaviour = optionNames[selection];
         }
 
-        AIBehaviours[currentBehaviour](this, deltaTime);
+        AIBehaviours[currentBehaviour](chara, deltaTime);
+    }
+
+    public void UpdateNotice(Character chara, float deltaTime) {
+        foreach (Character other in TacticalController.instance.map.characters) {
+            if (other == chara) {
+                continue;
+            }
+            // TODO: This is expensive, can we cheapen it? Keep an eye on performance here
+            double distance = Math.Sqrt(Math.Pow(chara.x - other.x, 2) + Math.Pow(chara.y - other.y, 2));
+
+            if (distance <= chara.perception) {
+                if (chara.noticedCharacters.ContainsKey(other) == false) {
+                    chara.noticedCharacters.Add(other, 0f);
+                    other.noticedBy.Add(chara);
+                    TacticalController.instance.map.onCharacterGraphicChanged(other);
+                    Debug.Log(chara.name + " noticed " + other.name + " - Perception: " + chara.perception + " Distance: " + distance + ".");
+                } else {
+                    chara.noticedCharacters[other] = 0f;
+                }
+            } else {
+                // We cannot see the other person. 
+                if (chara.noticedCharacters.TryGetValue(other, out float timeSinceLost)) {
+                    // We previously could see the other person
+                    if (timeSinceLost >= chara.intelligence) { // TODO: More sophisticated calculation
+                        chara.noticedCharacters.Remove(other);
+                        other.noticedBy.Remove(chara);
+                        TacticalController.instance.map.onCharacterGraphicChanged(other);
+                        Debug.Log(chara.name + " lost track of " + other.name + " - Intelligence: " + chara.intelligence + " time: " + timeSinceLost + ".");
+                    } else {
+                        chara.noticedCharacters[other] += deltaTime;
+                    }
+                }
+            }
+        }
     }
 
     public bool RegisterAIBehaviour(string name, Action<Character, float> behaviour, Action<Character> weight) {
@@ -241,5 +327,13 @@ public class Character {
         AIBehaviours.Remove(name);
         AIWeighOptions.Remove(name);
         return true;
+    }
+
+    public void RegisterOnUpdate(Action<Character, float> cbOnUpdate) {
+        onUpdate += cbOnUpdate;
+    }
+
+    public void UnregisterOnUpdate(Action<Character, float> cbOnUpdate) {
+        onUpdate -= cbOnUpdate;
     }
 }

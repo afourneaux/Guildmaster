@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AIBehaviour {
+public class WanderBehaviour {
 
-/* This AIBehaviour static class contains the various behaviours the Character AI is capable of.
+/* This WanderBehaviour static class contains the various behaviours the Character AI is capable of.
  * Each behaviour comes with its own "weigh" function, which determines the probability that a character
  * will choose this behaviour, based on their current status. For example, a character with low health and
  * many potions on-hand might be very inclined to quaff a healing potion, and therefore the weigh function
@@ -20,7 +20,7 @@ public class AIBehaviour {
 
 
     // Weigh the probability of selecting the Wander option based on the current context
-    public static void AI_WeighWander(Character chara) {
+    public static void WeighWander(Character chara) {
         if (chara.AIWeights.ContainsKey("wander")) {
             // Should we allow this, and overwrite the previous value?
             // Until we have a use case, just error out
@@ -32,7 +32,7 @@ public class AIBehaviour {
     }
 
     // Move a few tiles
-    public static void AI_Wander(Character chara, float deltaTime) {
+    public static void Wander(Character chara, float deltaTime) {
         if (chara.variables.TryGetValue("AI_wandering", out object wanderingObj) && (bool) wanderingObj == true) {
             // If a wander is ongoing and we have not arrived at the new tile, there is nothing more to do
             if (chara.variables.TryGetValue("sourceTile", out object sourceObj) == false || sourceObj == null) {
@@ -99,7 +99,7 @@ public class AIBehaviour {
     }
 
     // Weigh the probability of selecting the Rest option based on the current context
-    public static void AI_WeighRest(Character chara) {
+    public static void WeighRest(Character chara) {
         if (chara.AIWeights.ContainsKey("rest")) {
             // Should we allow this, and overwrite the previous value?
             // Until we have a use case, just error out
@@ -111,7 +111,7 @@ public class AIBehaviour {
     }
 
     // Stand in place
-    public static void AI_Rest(Character chara, float deltaTime) {
+    public static void Rest(Character chara, float deltaTime) {
         if (chara.variables.TryGetValue("AI_timeResting", out object timeObj)) {
             float time = (float) timeObj;
             time -= deltaTime;
@@ -129,7 +129,7 @@ public class AIBehaviour {
     }
 
     // DEBUG: Just a sample
-    public static void AI_WeighTeleport(Character chara) {
+    public static void WeighTeleport(Character chara) {
         if (chara.AIWeights.ContainsKey("teleport")) {
             // Should we allow this, and overwrite the previous value?
             // Until we have a use case, just error out
@@ -142,7 +142,7 @@ public class AIBehaviour {
 
     // DEBUG: Just a sample
     // Teleport to a random space on the grid, then wait for 2 seconds
-    public static void AI_Teleport(Character chara, float deltaTime) {
+    public static void Teleport(Character chara, float deltaTime) {
         if (chara.variables.TryGetValue("AI_teleportCooldown", out object timeObj)) {
             float time = (float) timeObj;
             time -= deltaTime;

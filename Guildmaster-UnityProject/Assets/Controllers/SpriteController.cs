@@ -82,6 +82,12 @@ public class SpriteController : MonoBehaviour
         // Object location
         charaGO.transform.position = new Vector3(chara.x, chara.y, 0);
 
+        // TODO: Move to some "visible" property in Character, set by the HideBehaviour component
+        bool isVisible = chara.allegiance == 1 || chara.noticedBy.Count > 0;
+        foreach (Renderer child in charaGO.GetComponentsInChildren<Renderer>()) {
+            child.enabled = isVisible;
+        }
+
         Sprite sprite;
         if (spritesMap.TryGetValue(chara.sprite, out sprite) == false) {
             Debug.LogError("SpriteController::OnCharacterGraphicChanged - Sprite not found: " + chara.sprite);
