@@ -19,13 +19,22 @@ public class TacticalController : MonoBehaviour
         instance = this;
         map = new Map(10, 20);  // TODO: Feed in some data structure to generate the map from JSON
         
-        // Generate some sample characters
+        // Generate some sample characters with sample data
         Character chara1 = new Character("Crimble Nottsworth", map.GetTileAt(map.width / 2, map.height / 2));
         Character chara2 = new Character("Zachary Nottingham", map.GetTileAt((map.width / 2) + 2, map.height / 2));
         Character chara3 = new Character("Dwayne \"The Rock\" Johnson", map.GetTileAt(map.width / 2, (map.height / 2) + 2));
         chara1.dexterity = 10;
         chara2.dexterity = 5;
         chara3.dexterity = 20;
+        chara1.RegisterAIBehaviour("wander", AIBehaviour.AI_Wander, AIBehaviour.AI_WeighWander);
+        chara1.RegisterAIBehaviour("rest", AIBehaviour.AI_Rest, AIBehaviour.AI_WeighRest);
+        chara1.RegisterAIBehaviour("teleport", AIBehaviour.AI_Teleport, AIBehaviour.AI_WeighTeleport);
+        chara2.RegisterAIBehaviour("wander", AIBehaviour.AI_Wander, AIBehaviour.AI_WeighWander);
+        chara2.RegisterAIBehaviour("rest", AIBehaviour.AI_Rest, AIBehaviour.AI_WeighRest);
+        chara3.RegisterAIBehaviour("wander", AIBehaviour.AI_Wander, AIBehaviour.AI_WeighWander);
+        chara3.RegisterAIBehaviour("rest", AIBehaviour.AI_Rest, AIBehaviour.AI_WeighRest);
+        chara3.RegisterAIBehaviour("teleport", AIBehaviour.AI_Teleport, AIBehaviour.AI_WeighTeleport);
+        chara3.UnregisterAIBehaviour("teleport"); // Test: Only chara1 should teleport
         map.PlaceCharacter(chara1);
         map.PlaceCharacter(chara2);
         map.PlaceCharacter(chara3);

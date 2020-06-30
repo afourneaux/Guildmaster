@@ -3,78 +3,41 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class AIBehaviour {
-    // Tracks the many AI actions that can be taken
-    Dictionary<string, Action<Character, float>> AI_Behaviours;
-    // All functions that weigh the probability of selecting a given AI option
-    Action<Character> AI_WeighOptions;
-    // Store the results of each Weigh function
-    Dictionary<string, int> AI_Weights;
 
-    public void AI_Configure(Character chara) {
-        // Register callbacks and set default values
-        AI_WeighOptions += AI_ClearWeights;
-        AI_WeighOptions += AI_WeighWander;
-        AI_WeighOptions += AI_WeighRest;
-        AI_WeighOptions += AI_WeighTeleport;
+/* This AIBehaviour static class contains the various behaviours the Character AI is capable of.
+ * Each behaviour comes with its own "weigh" function, which determines the probability that a character
+ * will choose this behaviour, based on their current status. For example, a character with low health and
+ * many potions on-hand might be very inclined to quaff a healing potion, and therefore the weigh function
+ * will return a higher value.
+ *
+ * Every behaviour must have a "continue" clause, where the next tick is expected to be the same function,
+ * and an "end" clause, which wraps up the current behaviour and prepares for the next. During the "end" clause,
+ * the function MUST reset the character's currentBehaviour to "deciding", so the AI will pick a new behaviour
+ *
+ * Eventually, this entire class will be ported to a scripting system for modability.
+ */
 
-        AI_Behaviours = new Dictionary<string, Action<Character, float>>();
-        AI_Behaviours.Add("wander", AI_Wander);
-        AI_Behaviours.Add("rest", AI_Rest);
-        AI_Behaviours.Add("teleport", AI_Teleport);
-
-        chara.variables.Add("AI_ConfigurationSet", true);
-    }
-
-    public void AI_Core(Character chara, float deltaTime) {
-        // Choose an action and perform it
-        if (chara.variables.TryGetValue("AI_ConfigurationSet", out object configuredObj) == false || (bool) configuredObj == false) {
-            AI_Configure(chara);
-        }
-
-        // If the AI is already running something which has not yet completed, continue it
-        if (chara.variables.TryGetValue("AI_runningFunction", out object functionObj)) {
-            Action<Character, float> runningFunction = (Action<Character, float>) functionObj;
-            runningFunction(chara, deltaTime);
-        } else {
-            AI_WeighOptions(chara);
-            List<int> options = new List<int>();
-            Dictionary<int, string> optionNames = new Dictionary<int, string>();
-            int index = 0;
-            foreach (KeyValuePair<string, int> weight in AI_Weights) {
-                options.Add(weight.Value);
-                optionNames.Add(index, weight.Key);
-                index++;
-            }
-            int selected = TacticalController.MakeDecision(options);
-            Action<Character, float> optionToRun = AI_Behaviours[optionNames[selected]];
-            optionToRun(chara, deltaTime);
-        }
-    }
-
-    public void AI_ClearWeights(Character chara) {
-        AI_Weights = new Dictionary<string, int>();
-    }
 
 
     // Weigh the probability of selecting the Wander option based on the current context
-    public void AI_WeighWander(Character chara) {
-        if (AI_Weights.ContainsKey("wander")) {
+    public static void AI_WeighWander(Character chara) {
+        if (chara.AIWeights.ContainsKey("wander")) {
             // Should we allow this, and overwrite the previous value?
             // Until we have a use case, just error out
             Debug.LogError("Trying to weigh the Wander AI twice for character: " + chara.name);
             return;
         }
 
-        AI_Weights.Add("wander", 10);    // TODO: Base on some personality trait
+        chara.AIWeights.Add("wander", 10);    // TODO: Base on some personality trait
     }
 
     // Move a few tiles
-    public void AI_Wander(Character chara, float deltaTime) {
+    public static void AI_Wander(Character chara, float deltaTime) {
         if (chara.variables.TryGetValue("AI_wandering", out object wanderingObj) && (bool) wanderingObj == true) {
             // If a wander is ongoing, continue it
             if (chara.variables.TryGetValue("sourceTile", out object sourceObj) == false || sourceObj == null) {
                 chara.variables.Remove("AI_wandering");
-                chara.variables.Remove("AI_runningFunction");
+                chara.currentBehaviour = "deciding";
             }
         } else {
             // First, check for available adjacent tiles to move to
@@ -124,85 +87,67 @@ public class AIBehaviour {
             // Then, randomly choose one
             if (directions.Count <= 0) {
                 // If no directions are possible, bail out
+                chara.currentBehaviour = "deciding";
                 return;
             }
             int choice = UnityEngine.Random.Range(0, directions.Count);
             Tile destination = directions[choice];
             chara.BeginMove(destination);
             chara.variables.Add("AI_wandering", true);
-            chara.variables.Add("AI_runningFunction", (Action<Character, float>) AI_Wander);
         }
-
-        /*
-        if (variables.TryGetValue("AI_timeWandering", out object timeObj)) {
-            float time = (float) timeObj;
-            time -= deltaTime;
-            if (time <= 0) {
-                Debug.Log("ACTION: " + name + " finishes their wander" + " - " + Time.time);
-                variables.Remove("AI_timeWandering");
-                variables.Remove("AI_runningFunction");
-            } else {
-                variables["AI_timeWandering"] = time;
-            }
-        } else {
-            variables.Add("AI_timeWandering", 3 - deltaTime);  // Wander for 3 seconds
-            variables.Add("AI_runningFunction", (Action<Character, float>) AI_Wander);
-            Debug.Log("ACTION: " + name + " begins wandering" + " - " + Time.time);
-        }*/
     }
 
     // Weigh the probability of selecting the Rest option based on the current context
-    public void AI_WeighRest(Character chara) {
-        if (AI_Weights.ContainsKey("rest")) {
+    public static void AI_WeighRest(Character chara) {
+        if (chara.AIWeights.ContainsKey("rest")) {
             // Should we allow this, and overwrite the previous value?
             // Until we have a use case, just error out
             Debug.LogError("Trying to weigh the Rest AI twice for character: " + chara.name);
             return;
         }
 
-        AI_Weights.Add("rest", 5);    // TODO: Base on some personality trait
+        chara.AIWeights.Add("rest", 5);    // TODO: Base on some personality trait
     }
 
     // Stand in place
-    public void AI_Rest(Character chara, float deltaTime) {
+    public static void AI_Rest(Character chara, float deltaTime) {
         if (chara.variables.TryGetValue("AI_timeResting", out object timeObj)) {
             float time = (float) timeObj;
             time -= deltaTime;
             if (time <= 0) {
                 //Debug.Log("ACTION: " + name + " finishes their rest" + " - " + Time.time);
                 chara.variables.Remove("AI_timeResting");
-                chara.variables.Remove("AI_runningFunction");
+                chara.currentBehaviour = "deciding";
             } else {
                 chara.variables["AI_timeResting"] = time;
             }
         } else {
             chara.variables.Add("AI_timeResting", 1f);  // Rest for 1 second
-            chara.variables.Add("AI_runningFunction", (Action<Character, float>) AI_Rest);
             //Debug.Log("ACTION: " + name + " begins resting" + " - " + Time.time);
         }
     }
 
     // DEBUG: Just a sample
-    public void AI_WeighTeleport(Character chara) {
-        if (AI_Weights.ContainsKey("teleport")) {
+    public static void AI_WeighTeleport(Character chara) {
+        if (chara.AIWeights.ContainsKey("teleport")) {
             // Should we allow this, and overwrite the previous value?
             // Until we have a use case, just error out
             Debug.LogError("Trying to weigh the Teleport AI twice for character: " + chara.name);
             return;
         }
 
-        AI_Weights.Add("teleport", 1);    // TODO: Base on some personality trait
+        chara.AIWeights.Add("teleport", 1);    // TODO: Base on some personality trait
     }
 
     // DEBUG: Just a sample
     // Teleport to a random space on the grid, then wait for 2 seconds
-    public void AI_Teleport(Character chara, float deltaTime) {
+    public static void AI_Teleport(Character chara, float deltaTime) {
         if (chara.variables.TryGetValue("AI_teleportCooldown", out object timeObj)) {
             float time = (float) timeObj;
             time -= deltaTime;
             if (time <= 0) {
                 chara.variables.Remove("AI_teleportCooldown");
-                chara.variables.Remove("AI_runningFunction");
+                chara.currentBehaviour = "deciding";
             } else {
                 chara.variables["AI_teleportCooldown"] = time;
             }
@@ -217,10 +162,9 @@ public class AIBehaviour {
                 y = UnityEngine.Random.Range(0, TacticalController.instance.map.height);
                 tile = TacticalController.instance.map.GetTileAt(x, y);
             } while (tile.character != null);
-            chara.UpdatePosition(x, y);
-            chara.UpdateTile(tile);
+            chara.SetPosition(x, y);
+            chara.SetTile(tile);
             chara.variables.Add("AI_teleportCooldown", 2f);  // Rest for 2 seconds
-            chara.variables.Add("AI_runningFunction", (Action<Character, float>) AI_Teleport);
         }
     }
 }

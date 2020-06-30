@@ -18,7 +18,17 @@ public class Character {
     // Tracks variables and their values from components
     public Dictionary<string, object> variables;
     // Tracks functions to run on Update() for each component
-    Action<Character, float> onUpdate;
+    Action<float> onUpdate;
+
+    // AI logic
+    // Tracks the many AI actions that can be taken
+    public Dictionary<string, Action<Character, float>> AIBehaviours;
+    // Store the results of each Weigh function
+    public Dictionary<string, int> AIWeights;
+    // All functions that weigh the probability of selecting a given AI option
+    public Dictionary<string, Action<Character>> AIWeighOptions;
+    // The AI behaviour which is currently active
+    public string currentBehaviour;
 
     // These base stats will be shared by all Characters, so they are not in a component.
     // TODO: Should stats be saved some other way? A data structure perchance?
@@ -75,17 +85,19 @@ public class Character {
         sprite = "knight"; // TODO: Set sprite name
         x = startTile.x;
         y = startTile.y;
+        currentBehaviour = "deciding";
+
+        AIBehaviours = new Dictionary<string, Action<Character, float>>();
+        AIWeights = new Dictionary<string, int>();
+        AIWeighOptions = new Dictionary<string, Action<Character>>();
 
         onUpdate += Move;
-
-        // DEBUG: Add basic AI behaviour
-        AIBehaviour AICore = new AIBehaviour();
-        onUpdate += AICore.AI_Core;
+        onUpdate += UpdateAI;
     }
 
     public void Update(float deltaTime) {
         if (onUpdate != null) {
-            onUpdate(this, deltaTime);
+            onUpdate(deltaTime);
         }
     }
 
@@ -102,32 +114,32 @@ public class Character {
 
         destination.character = this;
         variables.Add("sourceTile", currentTile);
-        UpdateTile(destination);
+        SetTile(destination);
     }
 
-    void Move(Character chara, float deltaTime) {
-        if (chara.variables.TryGetValue("sourceTile", out object sourceObj)) {
+    void Move(float deltaTime) {
+        if (variables.TryGetValue("sourceTile", out object sourceObj)) {
             Tile source = (Tile) sourceObj;
-            if ((source == chara.currentTile) || (chara.x == chara.currentTile.x && chara.y == chara.currentTile.y)) {
+            if ((source == currentTile) || (x == currentTile.x && y == currentTile.y)) {
                 // We have reached our destination
-                chara.variables.Remove("sourceTile");
+                variables.Remove("sourceTile");
                 return;
             }
 
-            int movementX = chara.currentTile.x - source.x;
-            int movementY = chara.currentTile.y - source.y;
+            int movementX = currentTile.x - source.x;
+            int movementY = currentTile.y - source.y;
             float tileCost = source.CostToEnterTile(currentTile);
-            float newX = chara.x + (movementX * (chara.dexterity / 10f) * deltaTime * tileCost);
-            float newY = chara.y + (movementY * (chara.dexterity / 10f) * deltaTime * tileCost);
+            float newX = x + (movementX * (dexterity / 10f) * deltaTime * tileCost);
+            float newY = y + (movementY * (dexterity / 10f) * deltaTime * tileCost);
 
-            newX = Mathf.Clamp(newX, Mathf.Min(source.x, chara.currentTile.x), Mathf.Max(source.x, chara.currentTile.x) );
-            newY = Mathf.Clamp(newY, Mathf.Min(source.y, chara.currentTile.y), Mathf.Max(source.y, chara.currentTile.y) );
+            newX = Mathf.Clamp(newX, Mathf.Min(source.x, currentTile.x), Mathf.Max(source.x, currentTile.x) );
+            newY = Mathf.Clamp(newY, Mathf.Min(source.y, currentTile.y), Mathf.Max(source.y, currentTile.y) );
 
-            chara.UpdatePosition(newX, newY);
+            SetPosition(newX, newY);
         }
     }
 
-    public void UpdatePosition(float newX, float newY) {
+    public void SetPosition(float newX, float newY) {
         if (x != newX || y != newY) {
             x = newX;
             y = newY;
@@ -135,8 +147,58 @@ public class Character {
         }
     }
 
-    public void UpdateTile(Tile newTile) {
+    public void SetTile(Tile newTile) {
         currentTile.character = null;
         currentTile = newTile;
+    }
+
+    // Run the current AI behaviour
+    public void UpdateAI(float deltaTime) {
+        // If the AI is deciding, get a new behaviour
+        if (currentBehaviour == "deciding") {
+            // Clear existing weights
+            AIWeights = new Dictionary<string, int>();
+            // Calculate the weight of each decision based on the current context
+            foreach (Action<Character> weighOption in AIWeighOptions.Values) {
+                weighOption(this);
+            }
+            // Convert the weights into an indexed list
+            List<int> options = new List<int>();
+            Dictionary<int, string> optionNames = new Dictionary<int, string>();
+            int index = 0;
+            foreach (KeyValuePair<string, int> weight in AIWeights) {
+                options.Add(weight.Value);
+                optionNames.Add(index, weight.Key);
+                index++;
+            }
+            if (index == 0) {
+                // There are no registered behaviours!
+                return;
+            }
+            int selection = TacticalController.MakeDecision(options);
+            currentBehaviour = optionNames[selection];
+        }
+
+        AIBehaviours[currentBehaviour](this, deltaTime);
+    }
+
+    public bool RegisterAIBehaviour(string name, Action<Character, float> behaviour, Action<Character> weight) {
+        if (AIBehaviours.ContainsKey(name)) {
+            Debug.LogError("Character::RegisterAIBehaviour - " + name + " already has a registered behaviour \"" + name + "\"!");
+            return false;
+        }
+        AIBehaviours.Add(name, behaviour);
+        AIWeighOptions.Add(name, weight);
+        return true;
+    }
+
+    public bool UnregisterAIBehaviour(string name) {
+        if (AIBehaviours.ContainsKey(name) == false) {
+            Debug.LogError("Character::RegisterAIBehaviour - " + name + " does not have the behaviour \"" + name + "\"!");
+            return false;
+        }
+        AIBehaviours.Remove(name);
+        AIWeighOptions.Remove(name);
+        return true;
     }
 }
