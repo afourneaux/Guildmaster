@@ -34,8 +34,9 @@ public class AIBehaviour {
     // Move a few tiles
     public static void AI_Wander(Character chara, float deltaTime) {
         if (chara.variables.TryGetValue("AI_wandering", out object wanderingObj) && (bool) wanderingObj == true) {
-            // If a wander is ongoing, continue it
+            // If a wander is ongoing and we have not arrived at the new tile, there is nothing more to do
             if (chara.variables.TryGetValue("sourceTile", out object sourceObj) == false || sourceObj == null) {
+                // End case: If we have arrived at our destination, remove the wandering flag and reset the AI
                 chara.variables.Remove("AI_wandering");
                 chara.currentBehaviour = "deciding";
             }
