@@ -1,3 +1,6 @@
+using System;
+using UnityEngine;
+
 public class Tile {
     public Map map {
         get;
@@ -42,6 +45,8 @@ public class Tile {
         }
     }
 
+    public Character character;
+
     // TODO: Some extra functionality like Cover, Secret, etc etc etc we'll worry about that later
 
     public Tile(Map m, int x, int y, int cte = 1, int ctl = 1, int s = 0) {
@@ -51,5 +56,32 @@ public class Tile {
         sprite = s;
         this.x = x;
         this.y = y;
+    }
+
+    public float CostToEnterTile(Tile otherTile, bool isAffectedByTerrain = true) {
+        if (this.x == otherTile.x && this.y == otherTile.y) {
+            Debug.LogError("Tile::CostToEnterTile - otherTile is this tile!");
+            return 1;
+        }
+
+        // Check if the destination is orthogonal or diagonal to the source
+        int movementX = Math.Abs(this.x - otherTile.x);
+        int movementY = Math.Abs(this.y - otherTile.y);
+
+        if (movementX > 1 || movementY > 1) {
+            Debug.LogError("Tile::CostToEnterTile - otherTile is not adjacent to this tile!");
+        }
+
+        float diagonalModifier = 1;
+        if (movementX + movementY != 1) {
+            // Move more slowly on diagonals
+            diagonalModifier = 0.71f; // 1 / Sqrt(2), because Sqrt() is expensive
+        }
+
+        if (isAffectedByTerrain) {
+            return diagonalModifier * costToLeave * otherTile.costToEnter;
+        } else {
+            return diagonalModifier;
+        }
     }
 }

@@ -7,6 +7,10 @@ public class Map {
         get; 
         protected set;
     }
+    public Action<Character> onCharacterGraphicChanged {
+        get; 
+        protected set;
+    }
     public int width {
         get; 
         protected set;
@@ -47,7 +51,22 @@ public class Map {
     }
 
     public Tile GetTileAt(int x, int y) {
+        if (x > tiles.GetUpperBound(0) || x < tiles.GetLowerBound(0) || y > tiles.GetUpperBound(1) || y < tiles.GetLowerBound(1)) {
+            // Index out of bounds
+            return null;
+        }
         return tiles[x,y];
+    }
+
+    public bool PlaceCharacter(Character chara) {
+        if (chara.currentTile.character != null) {
+            // Tile is occupied!
+            return false;
+        }
+        characters.Add(chara);
+        chara.currentTile.character = chara;
+
+        return true;
     }
 
     public void RegisterTileGraphicChangedCallback(Action<Tile> callback) {
@@ -56,5 +75,12 @@ public class Map {
 
     public void UnregisterTileGraphicChangedCallback(Action<Tile> callback) {
         onTileGraphicChanged -= callback;
+    }
+    public void RegisterCharacterGraphicChangedCallback(Action<Character> callback) {
+        onCharacterGraphicChanged += callback;
+    }
+
+    public void UnregisterCharacterGraphicChangedCallback(Action<Character> callback) {
+        onCharacterGraphicChanged -= callback;
     }
 }

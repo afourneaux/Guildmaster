@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,11 +16,19 @@ using UnityEngine;
 
 public class Character {
     // Tracks variables and their values from components
-    Dictionary<string, object> variables;
-    // Tracks which variable belongs to which component
-    Dictionary<string, string[]> components;
+    public Dictionary<string, object> variables;
     // Tracks functions to run on Update() for each component
-    Action<Character, float> onUpdate;
+    Action<float> onUpdate;
+
+    // AI logic
+    // Tracks the many AI actions that can be taken
+    public Dictionary<string, Action<Character, float>> AIBehaviours;
+    // Store the results of each Weigh function
+    public Dictionary<string, int> AIWeights;
+    // All functions that weigh the probability of selecting a given AI option
+    public Dictionary<string, Action<Character>> AIWeighOptions;
+    // The AI behaviour which is currently active
+    public string currentBehaviour;
 
     // These base stats will be shared by all Characters, so they are not in a component.
     // TODO: Should stats be saved some other way? A data structure perchance?
@@ -29,7 +36,7 @@ public class Character {
     int strength;
     int precision;
     int constitution;
-    int dexterity;
+    public int dexterity;
     public string name {
         get;
         protected set;
@@ -43,12 +50,20 @@ public class Character {
             if (_sprite != value) {
                 _sprite = value;
 
-                // TODO: Callback to change graphic when sprite's value changes
-                /*if (map.onTileGraphicChanged != null) {
-                    map.onTileGraphicChanged(this);
-                }*/
+                if (TacticalController.instance.map.onCharacterGraphicChanged != null) {
+                    TacticalController.instance.map.onCharacterGraphicChanged(this);
+                }
             }
         }
+    }
+
+    public float x {
+        get;
+        protected set;
+    }
+    public float y {
+        get;
+        protected set;
     }
     public Tile currentTile {
         get;
@@ -61,42 +76,129 @@ public class Character {
     // Awareness (stealth, noticing)
     // HP and dying
     // Social encounters
+    // Speech
 
     public Character(string name, Tile startTile) {
         variables = new Dictionary<string, object>();
-        components = new Dictionary<string, string[]>();
         currentTile = startTile;
         this.name = name;
         sprite = "knight"; // TODO: Set sprite name
+        x = startTile.x;
+        y = startTile.y;
+        currentBehaviour = "deciding";
+
+        AIBehaviours = new Dictionary<string, Action<Character, float>>();
+        AIWeights = new Dictionary<string, int>();
+        AIWeighOptions = new Dictionary<string, Action<Character>>();
+
+        onUpdate += Move;
+        onUpdate += UpdateAI;
     }
 
     public void Update(float deltaTime) {
         if (onUpdate != null) {
-            onUpdate(this, deltaTime); // Currently unused, eventually all logic will be moved here
+            onUpdate(deltaTime);
+        }
+    }
+
+    public void BeginMove(Tile destination) {
+        if (currentTile.x == destination.x && currentTile.y == destination.y) {
+            Debug.LogError("Character::Move - " + name + " has been assigned to move to its current tile!");
+            return;
         }
 
-        AI_Wander(this, deltaTime);
+        if (Math.Abs(currentTile.x - destination.x) > 1 || Math.Abs(currentTile.y - destination.y) > 1) {
+            Debug.LogError("Character::Move - " + name + " has been assigned to move to a non-adjacent tile!");
+            return;
+        }
+
+        destination.character = this;
+        variables.Add("sourceTile", currentTile);
+        SetTile(destination);
     }
 
-    public void AI_Wander(Character chara, float deltaTime) {
-        // Periodically move tile to tile
+    void Move(float deltaTime) {
+        if (variables.TryGetValue("sourceTile", out object sourceObj)) {
+            Tile source = (Tile) sourceObj;
+            if ((source == currentTile) || (x == currentTile.x && y == currentTile.y)) {
+                // We have reached our destination
+                variables.Remove("sourceTile");
+                return;
+            }
+
+            int movementX = currentTile.x - source.x;
+            int movementY = currentTile.y - source.y;
+            float tileCost = source.CostToEnterTile(currentTile);
+            float newX = x + (movementX * (dexterity / 10f) * deltaTime * tileCost);
+            float newY = y + (movementY * (dexterity / 10f) * deltaTime * tileCost);
+
+            newX = Mathf.Clamp(newX, Mathf.Min(source.x, currentTile.x), Mathf.Max(source.x, currentTile.x) );
+            newY = Mathf.Clamp(newY, Mathf.Min(source.y, currentTile.y), Mathf.Max(source.y, currentTile.y) );
+
+            SetPosition(newX, newY);
+        }
     }
 
-/*  TODO: Fix up in a clean way such that we can easily unregister simply by passing a component name. Not used for now.
-    public bool RegisterComponent(string componentName, Dictionary<string, object> variables, Action<Character> actions) {
-        if (components.ContainsKey(componentName)) {
-            Debug.LogError("Character::RegisterComponent - Component \"" + componentName + "\" already registered!");
+    public void SetPosition(float newX, float newY) {
+        if (x != newX || y != newY) {
+            x = newX;
+            y = newY;
+            TacticalController.instance.map.onCharacterGraphicChanged(this);
+        }
+    }
+
+    public void SetTile(Tile newTile) {
+        currentTile.character = null;
+        currentTile = newTile;
+    }
+
+    // Run the current AI behaviour
+    public void UpdateAI(float deltaTime) {
+        // If the AI is deciding, get a new behaviour
+        if (currentBehaviour == "deciding") {
+            // Clear existing weights
+            AIWeights = new Dictionary<string, int>();
+            // Calculate the weight of each decision based on the current context
+            foreach (Action<Character> weighOption in AIWeighOptions.Values) {
+                weighOption(this);
+            }
+            // Convert the weights into an indexed list
+            List<int> options = new List<int>();
+            Dictionary<int, string> optionNames = new Dictionary<int, string>();
+            int index = 0;
+            foreach (KeyValuePair<string, int> weight in AIWeights) {
+                options.Add(weight.Value);
+                optionNames.Add(index, weight.Key);
+                index++;
+            }
+            if (index == 0) {
+                // There are no registered behaviours!
+                return;
+            }
+            int selection = TacticalController.MakeDecision(options);
+            currentBehaviour = optionNames[selection];
+        }
+
+        AIBehaviours[currentBehaviour](this, deltaTime);
+    }
+
+    public bool RegisterAIBehaviour(string name, Action<Character, float> behaviour, Action<Character> weight) {
+        if (AIBehaviours.ContainsKey(name)) {
+            Debug.LogError("Character::RegisterAIBehaviour - " + name + " already has a registered behaviour \"" + name + "\"!");
             return false;
         }
-
-        string[] variableNames = new string[variables.Count];
-        variables.Keys.CopyTo(variableNames, 0);
-
-        foreach (string key in variableNames) {
-            if ()
-        }
-
+        AIBehaviours.Add(name, behaviour);
+        AIWeighOptions.Add(name, weight);
         return true;
     }
-    */
+
+    public bool UnregisterAIBehaviour(string name) {
+        if (AIBehaviours.ContainsKey(name) == false) {
+            Debug.LogError("Character::RegisterAIBehaviour - " + name + " does not have the behaviour \"" + name + "\"!");
+            return false;
+        }
+        AIBehaviours.Remove(name);
+        AIWeighOptions.Remove(name);
+        return true;
+    }
 }
