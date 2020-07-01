@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 public class Map {
     public List<Character> characters;
+    public Dictionary<int, List<Character>> charactersByAllegiance;
+    public Dictionary<int, Colour> allegianceColours;
+
     public Action<Tile> onTileGraphicChanged {
         get; 
         protected set;
@@ -39,6 +42,8 @@ public class Map {
         tiles = new Tile[w,h];
         spritesheet = ss;
         characters = new List<Character>();
+        allegianceColours = new Dictionary<int, Colour>();
+        charactersByAllegiance = new Dictionary<int, List<Character>>();
 
         Random rand = new Random(); // Temporary
 
@@ -65,6 +70,14 @@ public class Map {
         }
         characters.Add(chara);
         chara.currentTile.character = chara;
+
+        List<Character> allies;
+        if (charactersByAllegiance.TryGetValue(chara.allegiance, out allies)) {
+            allies.Add(chara);
+        } else {
+            allies = new List<Character>();
+            charactersByAllegiance.Add(chara.allegiance, allies);
+        }
 
         return true;
     }
