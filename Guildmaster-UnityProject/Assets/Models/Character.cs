@@ -53,7 +53,7 @@ public class Character {
     }
     public float timeSinceLastBehaviourChange;
 
-    Dictionary<Character, float> noticedCharacters;
+    public Dictionary<Character, float> noticedCharacters;
     public List<Character> noticedBy;
 
     // These base stats will be shared by all Characters, so they are not in a component.
@@ -65,7 +65,26 @@ public class Character {
     public int dexterity; // move speed
     public int perception; // Noticing distance
     public int intelligence; // How long before forgetting someone
-    public int bravery;
+    public int bravery; // How quickly a character returns from running
+
+    // TODO: Make more sophisticated
+    int _HP;
+    public int HP {
+        get {
+            return _HP;
+        }
+        set {
+            if (_HP != value) {
+                _HP = value;
+
+                // Update the health bar
+                if (TacticalController.instance.map.onCharacterGraphicChanged != null) {
+                    TacticalController.instance.map.onCharacterGraphicChanged(this);
+                }
+            }
+        }
+    }
+
     public string name {
         get;
         protected set;
@@ -85,6 +104,7 @@ public class Character {
             }
         }
     }
+    public bool isMoving;
 
     public float x {
         get;
@@ -127,6 +147,8 @@ public class Character {
 
         noticedCharacters = new Dictionary<Character, float>();
         noticedBy = new List<Character>();
+
+        isMoving = false;
 
         RegisterOnUpdate(UpdateMove);
         RegisterOnUpdate(UpdateNotice);
@@ -179,6 +201,9 @@ public class Character {
             newY = Mathf.Clamp(newY, Mathf.Min(source.y, currentTile.y), Mathf.Max(source.y, currentTile.y) );
 
             SetPosition(newX, newY);
+            isMoving = true;
+        } else {
+            isMoving = false;
         }
     }
 
@@ -261,6 +286,9 @@ public class Character {
             Dictionary<int, string> optionNames = new Dictionary<int, string>();
             int index = 0;
             foreach (KeyValuePair<string, int> weight in AIWeights) {
+                if (weight.Value == 0) {
+                    continue;
+                }
                 options.Add(weight.Value);
                 optionNames.Add(index, weight.Key);
                 index++;
@@ -276,20 +304,24 @@ public class Character {
         AIBehaviours[currentBehaviour](chara, deltaTime);
     }
 
+
+    // On each step, Notice will check how far away each other character is. If another character
+    // is within a certain range (defined by both characters' stats and terrain conditions) and
+    // line of sight is unobstructed, that other character is noticed. Characters will remember
+    // other characters for a certain amount of time after they lose sight, then forget about them.
     public void UpdateNotice(Character chara, float deltaTime) {
         foreach (Character other in TacticalController.instance.map.characters) {
             if (other == chara) {
                 continue;
             }
-            // TODO: This is expensive, can we cheapen it? Keep an eye on performance here
-            double distance = Math.Sqrt(Math.Pow(chara.x - other.x, 2) + Math.Pow(chara.y - other.y, 2));
+            double distance = GetDistanceToTarget(other);
 
             if (distance <= chara.perception) {
                 if (chara.noticedCharacters.ContainsKey(other) == false) {
                     chara.noticedCharacters.Add(other, 0f);
                     other.noticedBy.Add(chara);
                     TacticalController.instance.map.onCharacterGraphicChanged(other);
-                    Debug.Log(chara.name + " noticed " + other.name + " - Perception: " + chara.perception + " Distance: " + distance + ".");
+                    //Debug.Log(chara.name + " noticed " + other.name + " - Perception: " + chara.perception + " Distance: " + distance + ".");
                 } else {
                     chara.noticedCharacters[other] = 0f;
                 }
@@ -301,13 +333,18 @@ public class Character {
                         chara.noticedCharacters.Remove(other);
                         other.noticedBy.Remove(chara);
                         TacticalController.instance.map.onCharacterGraphicChanged(other);
-                        Debug.Log(chara.name + " lost track of " + other.name + " - Intelligence: " + chara.intelligence + " time: " + timeSinceLost + ".");
+                        //Debug.Log(chara.name + " lost track of " + other.name + " - Intelligence: " + chara.intelligence + " time: " + timeSinceLost + ".");
                     } else {
                         chara.noticedCharacters[other] += deltaTime;
                     }
                 }
             }
         }
+    }
+
+    // TODO: This is expensive, can we cheapen it? Keep an eye on performance here
+    public float GetDistanceToTarget(Character other) {
+        return (float) Math.Sqrt(Math.Pow(x - other.x, 2) + Math.Pow(y - other.y, 2));
     }
 
     public bool RegisterAIBehaviour(string name, Action<Character, float> behaviour, Action<Character> weight) {

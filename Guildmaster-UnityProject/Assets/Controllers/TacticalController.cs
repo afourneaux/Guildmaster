@@ -20,27 +20,33 @@ public class TacticalController : MonoBehaviour
         map = new Map(10, 10);  // TODO: Feed in some data structure to generate the map from JSON
         
         // Generate some sample characters with sample data (This data should come from the strategic layer)
-        Character chara1 = new Character("Crimble Nottsworth", map.GetTileAt(map.width / 2, map.height / 2), 1);
-        Character chara2 = new Character("Zachary Nottingham", map.GetTileAt((map.width / 2) + 2, map.height / 2), 1);
-        Character chara3 = new Character("Dwayne \"The Rock\" Johnson", map.GetTileAt(map.width / 2, (map.height / 2) + 2), 1);
+        Character chara1 = new Character("Crimble Nottsworth", map.GetTileAt(0, 0), 1);
+        Character chara2 = new Character("Zachary Nottingham", map.GetTileAt(0, map.height / 2), 1);
+        Character chara3 = new Character("Dwayne \"The Rock\" Johnson", map.GetTileAt(0, map.height - 1), 1);
         chara1.dexterity = 10;
         chara2.dexterity = 5;
         chara3.dexterity = 20;
         chara1.perception = 2;
         chara2.perception = 3;
-        chara3.perception = 5;
+        chara3.perception = 4;
         chara1.intelligence = 1;
         chara2.intelligence = 3;
         chara3.intelligence = 4;
+        chara1.HP = 10;
+        chara2.HP = 20;
+        chara3.HP = 15;
         chara1.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
         chara1.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
         chara1.RegisterAIBehaviour("teleport", WanderBehaviour.Teleport, WanderBehaviour.WeighTeleport);
+        chara1.RegisterAIBehaviour("seek", CombatBehaviour.Seek, CombatBehaviour.WeighSeek);
         chara2.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
         chara2.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
+        chara2.RegisterAIBehaviour("seek", CombatBehaviour.Seek, CombatBehaviour.WeighSeek);
         chara3.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
         chara3.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
         chara3.RegisterAIBehaviour("teleport", WanderBehaviour.Teleport, WanderBehaviour.WeighTeleport);
         chara3.UnregisterAIBehaviour("teleport"); // Test: Only chara1 should teleport
+        chara3.RegisterAIBehaviour("seek", CombatBehaviour.Seek, CombatBehaviour.WeighSeek);
         chara1.sprite = chara2.sprite = chara3.sprite = "knight";
         chara1.allegiance = chara2.allegiance = chara3.allegiance = 1;
         map.PlaceCharacter(chara1);
@@ -49,10 +55,11 @@ public class TacticalController : MonoBehaviour
 
         // Generate enemies. This data should come from the strategic layer, placing enemies into spawn points determined
         // by the map generation file
-        Character knifey = new Character("Knifey Knifesworth", map.GetTileAt(map.width - 1, map.height - 1), 2);
+        Character knifey = new Character("Knifey Knifesworth", map.GetTileAt(map.width - 1, map.height / 2), 2);
         knifey.dexterity = 15;
         knifey.sprite = "knifer";
         knifey.allegiance = 2;
+        knifey.HP = 5;
         map.PlaceCharacter(knifey);
 
         // Generate some sample colours (Should eventually come from whatever file generates the map)
@@ -97,7 +104,7 @@ public class TacticalController : MonoBehaviour
         foreach (int weight in options) {
             total += weight;
         }
-        int selection = Random.Range(0, total + 1);
+        int selection = Random.Range(1, total + 1);
         int returnIndex = 0;
         foreach (int weight in options) {
             selection -= weight;
@@ -107,8 +114,8 @@ public class TacticalController : MonoBehaviour
             returnIndex++;
         }
 
-        // Selection is somehow greater than the sum of the weights in Options on the second pass
-        Debug.LogError("Something went horribly wrong!");
+        // Something went horribly wrong!
+        Debug.LogError("TacticalController::MakeDecision - Selection is somehow greater than the sum of the weights in Options on the second pass");
         return -1;
     }
 }

@@ -18,7 +18,6 @@ public class WanderBehaviour {
  */
 
 
-
     // Weigh the probability of selecting the Wander option based on the current context
     public static void WeighWander(Character chara) {
         if (chara.AIWeights.ContainsKey("wander")) {
