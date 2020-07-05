@@ -98,22 +98,20 @@ public class SpriteController : MonoBehaviour
         GameObject spriteGO = charaGO.transform.Find(charaGO.name + "_Sprite").gameObject;
         spriteGO.GetComponent<SpriteRenderer>().sprite = CharacterSprite;
 
-        if (chara.HP > 0) {
-            Sprite hpGreenSprite;
-            Sprite hpRedSprite;
-            if (spritesMap.TryGetValue("hp_green", out hpGreenSprite) == false) {
-                Debug.LogError("SpriteController::OnCharacterGraphicChanged - Sprite not found: hp_green");
-            }
-            if (spritesMap.TryGetValue("hp_red", out hpRedSprite) == false) {
-                Debug.LogError("SpriteController::OnCharacterGraphicChanged - Sprite not found: hp_red");
-            }
-            GameObject hpGO = charaGO.transform.Find(charaGO.name + "_HP").gameObject;
-            GameObject hpGreenGO = hpGO.transform.Find(charaGO.name + "_HP_Green").gameObject;
-            hpGreenGO.GetComponent<SpriteRenderer>().sprite = hpGreenSprite;
-            hpGreenGO.transform.localScale = new Vector3(HP_SIZE.x * ((float)chara.HP / (float)chara.constitution), HP_SIZE.y, 0);
-            GameObject hpRedGO = hpGO.transform.Find(charaGO.name + "_HP_Red").gameObject;
-            hpRedGO.GetComponent<SpriteRenderer>().sprite = hpRedSprite;
+        Sprite hpGreenSprite;
+        Sprite hpRedSprite;
+        if (spritesMap.TryGetValue("hp_green", out hpGreenSprite) == false) {
+            Debug.LogError("SpriteController::OnCharacterGraphicChanged - Sprite not found: hp_green");
         }
+        if (spritesMap.TryGetValue("hp_red", out hpRedSprite) == false) {
+            Debug.LogError("SpriteController::OnCharacterGraphicChanged - Sprite not found: hp_red");
+        }
+        GameObject hpGO = charaGO.transform.Find(charaGO.name + "_HP").gameObject;
+        GameObject hpGreenGO = hpGO.transform.Find(charaGO.name + "_HP_Green").gameObject;
+        hpGreenGO.GetComponent<SpriteRenderer>().sprite = hpGreenSprite;
+        hpGreenGO.transform.localScale = new Vector3(Math.Max(0, HP_SIZE.x * ((float)chara.HP / (float)chara.constitution)), HP_SIZE.y, 0);
+        GameObject hpRedGO = hpGO.transform.Find(charaGO.name + "_HP_Red").gameObject;
+        hpRedGO.GetComponent<SpriteRenderer>().sprite = hpRedSprite;
     }
 
     // This effectively replaces grabbing a prefab

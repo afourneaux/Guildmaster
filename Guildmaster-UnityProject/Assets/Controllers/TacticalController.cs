@@ -29,18 +29,21 @@ public class TacticalController : MonoBehaviour
         chara1.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
         chara1.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
         chara1.RegisterAIBehaviour("teleport", WanderBehaviour.Teleport, WanderBehaviour.WeighTeleport);
-        chara1.RegisterAIBehaviour("seek", CombatBehaviour.Seek, CombatBehaviour.WeighSeek);
+        chara1.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
         chara1.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
+        chara1.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
         chara2.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
         chara2.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
-        chara2.RegisterAIBehaviour("seek", CombatBehaviour.Seek, CombatBehaviour.WeighSeek);
+        chara2.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
         chara2.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
+        chara2.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
         chara3.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
         chara3.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
         chara3.RegisterAIBehaviour("teleport", WanderBehaviour.Teleport, WanderBehaviour.WeighTeleport);
         chara3.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
         chara3.UnregisterAIBehaviour("teleport"); // Test: Only chara1 should teleport
-        chara3.RegisterAIBehaviour("seek", CombatBehaviour.Seek, CombatBehaviour.WeighSeek);
+        chara3.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
+        chara3.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
         chara1.sprite = chara2.sprite = chara3.sprite = "knight";
         chara1.allegiance = chara2.allegiance = chara3.allegiance = 1;
         map.PlaceCharacter(chara1);
@@ -53,14 +56,14 @@ public class TacticalController : MonoBehaviour
         knifey.SetStats(5, 100, 10, 500, 2, 2, 10);
         knifey.sprite = "knifer";
         knifey.allegiance = 2;
-        //knifey.RegisterAIBehaviour("seek", CombatBehaviour.Seek, CombatBehaviour.WeighSeek);
+        knifey.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
+        knifey.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
         knifey.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
         map.PlaceCharacter(knifey);
 
         // Generate some sample colours (Should eventually come from whatever file generates the map)
         map.allegianceColours.Add(1, Colour.GREEN);
         map.allegianceColours.Add(2, Colour.RED);
-
     }
 
     float randomDelay = 2f;

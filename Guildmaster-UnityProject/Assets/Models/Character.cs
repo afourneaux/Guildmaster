@@ -75,6 +75,13 @@ public class Character {
         }
         set {
             if (_HP != value) {
+                if (_HP > 0 && value <= 0) {
+                    GoDown();
+                }
+                if (_HP <= 0 && value > 0) {
+                    GetUp();
+                }
+
                 _HP = value;
 
                 // Update the health bar
@@ -83,6 +90,14 @@ public class Character {
                 }
             }
         }
+    }
+
+    public bool isDying {
+        get; protected set;
+    }
+
+    public bool isDead {
+        get; protected set;
     }
 
     public string name {
@@ -149,6 +164,7 @@ public class Character {
         noticedBy = new List<Character>();
 
         isMoving = false;
+        isDying = isDead = false;
 
         RegisterOnUpdate(UpdateMove);
         RegisterOnUpdate(UpdateNotice);
@@ -171,8 +187,15 @@ public class Character {
     }
 
     public void Update(float deltaTime) {
-        if (onUpdate != null) {
-            onUpdate(this, deltaTime);
+        if (isDying) {
+            // Do dying things, like bleeding
+        } else if (isDead) {
+            // Do dead things, like lie still
+        } else {
+            // Do alive things, like explore
+            if (onUpdate != null) {
+                onUpdate(this, deltaTime);
+            }
         }
     }
 
@@ -360,8 +383,22 @@ public class Character {
     }
 
     // TODO: The Sqrt function is expensive, can we cheapen it? Keep an eye on performance here
+    // TODO: make an IsInRange function given a desired range, returns bool. That way we can square
+    //       the desired range for comparison instead of Sqrt the actual distance
     public float GetDistanceToTarget(Character other) {
         return (float) Math.Sqrt(Math.Pow(x - other.x, 2) + Math.Pow(y - other.y, 2));
+    }
+
+    // HP just hit 0
+    public void GoDown() {
+        // TODO: Differentiate isDying and isDead
+        Debug.Log(name + " is dead!");
+        isDying = isDead = true;
+    }
+
+    // HP was 0, now restored to above 0
+    public void GetUp() {
+        isDying = isDead = false;
     }
 
     public bool RegisterAIBehaviour(string name, Action<Character, float> behaviour, Action<Character> weight) {
