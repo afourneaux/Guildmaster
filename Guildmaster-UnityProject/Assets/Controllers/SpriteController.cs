@@ -15,6 +15,9 @@ public class SpriteController : MonoBehaviour
     Dictionary<Tile, GameObject> tileGOMap;
     Dictionary<Character, GameObject> characterGOMap;
 
+    Vector2 HP_POS = new Vector2(0, 0.5f);
+    Vector2 HP_SIZE = new Vector2(1f, 0.1f);
+
     void Start() {
         tileGOMap = new Dictionary<Tile, GameObject>();
         characterGOMap = new Dictionary<Character, GameObject>();
@@ -88,24 +91,45 @@ public class SpriteController : MonoBehaviour
             child.enabled = isVisible;
         }
 
-        Sprite sprite;
-        if (spritesMap.TryGetValue(chara.sprite, out sprite) == false) {
+        Sprite CharacterSprite;
+        if (spritesMap.TryGetValue(chara.sprite, out CharacterSprite) == false) {
             Debug.LogError("SpriteController::OnCharacterGraphicChanged - Sprite not found: " + chara.sprite);
         }
-        charaGO.GetComponent<SpriteRenderer>().sprite = sprite;
+        GameObject spriteGO = charaGO.transform.Find(charaGO.name + "_Sprite").gameObject;
+        spriteGO.GetComponent<SpriteRenderer>().sprite = CharacterSprite;
+
+        if (chara.HP > 0) {
+            Sprite hpGreenSprite;
+            Sprite hpRedSprite;
+            if (spritesMap.TryGetValue("hp_green", out hpGreenSprite) == false) {
+                Debug.LogError("SpriteController::OnCharacterGraphicChanged - Sprite not found: hp_green");
+            }
+            if (spritesMap.TryGetValue("hp_red", out hpRedSprite) == false) {
+                Debug.LogError("SpriteController::OnCharacterGraphicChanged - Sprite not found: hp_red");
+            }
+            GameObject hpGO = charaGO.transform.Find(charaGO.name + "_HP").gameObject;
+            GameObject hpGreenGO = hpGO.transform.Find(charaGO.name + "_HP_Green").gameObject;
+            hpGreenGO.GetComponent<SpriteRenderer>().sprite = hpGreenSprite;
+            hpGreenGO.transform.localScale = new Vector3(HP_SIZE.x * ((float)chara.HP / (float)chara.constitution), HP_SIZE.y, 0);
+            GameObject hpRedGO = hpGO.transform.Find(charaGO.name + "_HP_Red").gameObject;
+            hpRedGO.GetComponent<SpriteRenderer>().sprite = hpRedSprite;
+        }
     }
 
     // This effectively replaces grabbing a prefab
     void CreateCharacter(Character chara) {
+        // Create an empty container object
         string objectName = "Character_" + chara.name.Replace(' ', '_');
         GameObject charaGO = new GameObject();
         charaGO.name = objectName;
         charaGO.transform.SetParent(this.transform, true);
-        SpriteRenderer charaSR = charaGO.AddComponent<SpriteRenderer>();
+        // Create character sprite
+        GameObject spriteGO = new GameObject(objectName + "_Sprite");
+        spriteGO.transform.SetParent(charaGO.transform, false);
+        SpriteRenderer charaSR = spriteGO.AddComponent<SpriteRenderer>();
         charaSR.sortingLayerName = "Characters";
         // Create nameplate
-        GameObject textGO = new GameObject();
-        textGO.name = objectName + "_Text";
+        GameObject textGO = new GameObject(objectName + "_Text");
         textGO.transform.SetParent(charaGO.transform, false);
         TextMeshPro textMesh = textGO.AddComponent<TextMeshPro>();
         textMesh.text = chara.name;
@@ -128,6 +152,31 @@ public class SpriteController : MonoBehaviour
 
         // Allow text to bleed halfway into other tiles
         textGO.GetComponent<RectTransform>().sizeDelta = new Vector2(2, 1);
+
+        Texture2D greenBar = Resources.Load<Texture2D>("hp_green");
+        Texture2D redBar = Resources.Load<Texture2D>("hp_red");
+        // Create health bar
+        if (chara.HP != 0) {
+            GameObject hpGO = new GameObject(objectName + "_HP");
+            hpGO.transform.SetParent(charaGO.transform, false);
+            GameObject hpGreenGO = new GameObject(objectName + "_HP_Green");
+            hpGreenGO.transform.SetParent(hpGO.transform, false);
+            hpGreenGO.transform.localPosition = new Vector3(-0.5f, HP_POS.y, 0);
+            hpGreenGO.transform.localScale = new Vector3(HP_SIZE.x, HP_SIZE.y, 0);
+            SpriteRenderer hpGreenSR = hpGreenGO.AddComponent<SpriteRenderer>();
+            hpGreenSR.sortingLayerName = "UI";
+            hpGreenSR.sortingOrder = 1;
+            RectTransform hpGreenRT = hpGreenGO.AddComponent<RectTransform>();
+            hpGreenRT.pivot = new Vector2(0, 0.5f); // Anchor left
+            GameObject hpRedGO = new GameObject(objectName + "_HP_Red");
+            hpRedGO.transform.SetParent(hpGO.transform, false);
+            hpRedGO.transform.localPosition = new Vector3(HP_POS.x, HP_POS.y, 0);
+            hpRedGO.transform.localScale = new Vector3(HP_SIZE.x, HP_SIZE.y, 0);
+            SpriteRenderer hpRedSR = hpRedGO.AddComponent<SpriteRenderer>();
+            hpRedSR.sortingLayerName = "UI";
+            hpRedSR.sortingOrder = 0;
+        }
+
         characterGOMap.Add(chara, charaGO);
         OnCharacterGraphicChanged(chara);
     }

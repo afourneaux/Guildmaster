@@ -156,6 +156,20 @@ public class Character {
         RegisterOnUpdate(UpdateAI);
     }
 
+    // TODO: Base on some grand data structure of character stats
+    public void SetStats(int strength, int dexterity, int precision, int constitution, int perception, int intelligence, int bravery) {
+        this.strength = strength;
+        this.dexterity = dexterity;
+        this.precision = precision;
+        this.constitution = constitution;
+        this.perception = perception;
+        this.intelligence = intelligence;
+        this.bravery = bravery;
+
+        // TODO: Base on level? Some other calculation?
+        this.HP = constitution;
+    }
+
     public void Update(float deltaTime) {
         if (onUpdate != null) {
             onUpdate(this, deltaTime);
@@ -312,17 +326,20 @@ public class Character {
     public void UpdateNotice(Character chara, float deltaTime) {
         foreach (Character other in TacticalController.instance.map.characters) {
             if (other == chara) {
+                // Don't worry about noticing oneself
                 continue;
             }
             double distance = GetDistanceToTarget(other);
 
             if (distance <= chara.perception) {
                 if (chara.noticedCharacters.ContainsKey(other) == false) {
+                    // Character was noticed when not noticed before
                     chara.noticedCharacters.Add(other, 0f);
                     other.noticedBy.Add(chara);
                     TacticalController.instance.map.onCharacterGraphicChanged(other);
                     //Debug.Log(chara.name + " noticed " + other.name + " - Perception: " + chara.perception + " Distance: " + distance + ".");
                 } else {
+                    // Character was noticed again
                     chara.noticedCharacters[other] = 0f;
                 }
             } else {
@@ -342,7 +359,7 @@ public class Character {
         }
     }
 
-    // TODO: This is expensive, can we cheapen it? Keep an eye on performance here
+    // TODO: The Sqrt function is expensive, can we cheapen it? Keep an eye on performance here
     public float GetDistanceToTarget(Character other) {
         return (float) Math.Sqrt(Math.Pow(x - other.x, 2) + Math.Pow(y - other.y, 2));
     }

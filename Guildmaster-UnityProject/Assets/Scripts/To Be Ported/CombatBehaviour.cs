@@ -142,6 +142,46 @@ public class CombatBehaviour {
         }
     }
 
+    public static void WeighAttack(Character chara) {
+        if (chara.AIWeights.ContainsKey("attack")) {
+            // Should we allow this, and overwrite the previous value?
+            // Until we have a use case, just error out
+            Debug.LogError("Trying to weigh the Seek AI twice for character: " + chara.name);
+            return;
+        }
+
+        // If we have a target, smack it
+        if (chara.behaviourState == BehaviourState.COMBAT && chara.variables.TryGetValue("combat_target", out object targetObj)) {
+            Character target = TacticalController.instance.map.characters[(int) targetObj];
+            if (chara.GetDistanceToTarget(target) <= DEFAULT_RANGE) {
+                chara.AIWeights.Add("attack", 10);
+            }
+        }
+    }
+
+    public static void Attack (Character chara, float deltaTime) {
+        if (chara.variables.TryGetValue("combat_target", out object targetObj)) {
+            if (chara.variables.TryGetValue("combat_attackCooldown", out object cooldownObj)) {
+                float cooldown = (float) cooldownObj;
+                cooldown -= deltaTime;
+                if (cooldown > 0) {
+                    chara.variables["combat_attackCooldown"] = cooldown;
+                } else {
+                    chara.variables.Remove("combat_attackCooldown");
+                    chara.currentBehaviour = "deciding";
+                }
+            } else {
+                Character target = TacticalController.instance.map.characters[(int) targetObj];
+                // TODO: Make more sophisticated
+                target.HP -= chara.strength;
+                chara.variables.Add("combat_attackCooldown", 50f / (float)chara.dexterity);
+                Debug.Log(chara.name + " attacks " + target.name + " for " + chara.strength + " damage!");
+            }
+        } else {
+            Debug.LogError(chara.name + " is attacking without a target!");
+        }
+    }
+
     public static List<Character> FindTargetsInRange(Character chara, bool includeAllies = false) {
         List<Character> targets = new List<Character>();
 
