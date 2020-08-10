@@ -94,6 +94,7 @@ public class WanderBehaviour {
                 chara.currentBehaviour = "deciding";
                 return;
             }
+            // TODO: Weighted choice to make more realistic wandering
             int choice = UnityEngine.Random.Range(0, directions.Count);
             Tile destination = directions[choice];
             chara.BeginMove(destination);

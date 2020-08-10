@@ -119,14 +119,16 @@ public class CombatBehaviour {
             return;
         }
 
-        if (chara.variables.TryGetValue("combat_target", out object targetObj)) {
-            Character target = TacticalController.instance.map.characters[(int) targetObj];
-            float distance = chara.GetDistanceToTarget(target);
-            if (distance > DEFAULT_RANGE) {
-                chara.AIWeights.Add("reposition", 10);
-            }
-            if (DEFAULT_RANGE - distance >= 2) {
-                chara.AIWeights.Add("reposition", 3);
+        if (chara.behaviourState == BehaviourState.COMBAT) {
+            if (chara.variables.TryGetValue("combat_target", out object targetObj)) {
+                Character target = TacticalController.instance.map.characters[(int) targetObj];
+                float distance = chara.GetDistanceToTarget(target);
+                if (distance > DEFAULT_RANGE) {
+                    chara.AIWeights.Add("reposition", 10);
+                }
+                if (DEFAULT_RANGE - distance >= 2) {
+                    chara.AIWeights.Add("reposition", 3);
+                }
             }
         }
     }

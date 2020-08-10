@@ -212,6 +212,10 @@ public class Character {
         if (destination.character != null) {
             Debug.LogError("Character::BeginMove - " + name + " has been assigned an occupied tile! Allowing the move");
         }
+        if (variables.ContainsKey("sourceTile")) {
+            Debug.LogError("Character::BeginMove - " + name + " already has a source tile!");
+            return;
+        }
 
         currentTile.character = null;
         variables.Add("sourceTile", currentTile);
@@ -265,6 +269,7 @@ public class Character {
     // Change the current behaviour state based on the current context
     public void UpdateBehaviourState(Character chara, float deltaTime) {
         bool enemiesNearby = false;
+        bool threatsNearby = false;
         bool alliesNearby = false;
         // Take stock of surrounding characters
         foreach (Character other in noticedCharacters.Keys) {
@@ -273,6 +278,9 @@ public class Character {
             if (other.allegiance == allegiance) {
                 alliesNearby = true;
             } else {
+                if (!other.isDead && !other.isDying) {
+                    threatsNearby = true;
+                }
                 enemiesNearby = true;
             }
         }
@@ -283,7 +291,7 @@ public class Character {
             if (alliesNearby) {
                 recoveryModifier += 0.5f;
             }
-            if (enemiesNearby) {
+            if (threatsNearby) {
                 recoveryModifier -= 0.5f;
             }
             timeSinceLastBehaviourChange += deltaTime * recoveryModifier;
@@ -295,7 +303,7 @@ public class Character {
         }
 
         // If there are nearby enemies, go to Combat
-        if (enemiesNearby) {
+        if (threatsNearby) {
             behaviourState = BehaviourState.COMBAT;
             return;
         }

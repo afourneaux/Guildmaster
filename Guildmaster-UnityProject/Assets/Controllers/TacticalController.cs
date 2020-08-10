@@ -19,13 +19,13 @@ public class TacticalController : MonoBehaviour
         instance = this;
         map = new Map(10, 10);  // TODO: Feed in some data structure to generate the map from JSON
         
-        // Generate some sample characters with sample data (This data should come from the strategic layer)
+        // Generate some sample characters with sample data (TODO: This data should come from the strategic layer)
         Character chara1 = new Character("Crimble Nottsworth", map.GetTileAt(0, 0), 1);
         Character chara2 = new Character("Zachary Nottingham", map.GetTileAt(0, map.height / 2), 1);
         Character chara3 = new Character("Dwayne \"The Rock\" Johnson", map.GetTileAt(0, map.height - 1), 1);
         chara1.SetStats(10, 10, 10, 10, 10, 10, 10);
-        chara2.SetStats(20, 5, 50, 3, 5, 5, 5);
-        chara3.SetStats(3, 100, 1, 20, 20, 10, 10);
+        chara2.SetStats(20, 5, 20, 3, 5, 5, 5);
+        chara3.SetStats(3, 30, 1, 20, 20, 10, 10);
         chara1.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
         chara1.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
         chara1.RegisterAIBehaviour("teleport", WanderBehaviour.Teleport, WanderBehaviour.WeighTeleport);
@@ -53,7 +53,7 @@ public class TacticalController : MonoBehaviour
         // Generate enemies. This data should come from the strategic layer, placing enemies into spawn points determined
         // by the map generation file
         Character knifey = new Character("Knifey Knifesworth", map.GetTileAt(map.width - 1, map.height / 2), 2);
-        knifey.SetStats(5, 100, 10, 500, 2, 2, 10);
+        knifey.SetStats(5, 20, 10, 30, 2, 2, 10);
         knifey.sprite = "knifer";
         knifey.allegiance = 2;
         knifey.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
@@ -81,6 +81,7 @@ public class TacticalController : MonoBehaviour
             randomCountdown = randomDelay;
         }
 
+        // Update each character
         foreach(Character chara in map.characters) {
             chara.Update(Time.deltaTime);
         }
