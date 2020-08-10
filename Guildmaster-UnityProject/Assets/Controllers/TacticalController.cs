@@ -59,6 +59,9 @@ public class TacticalController : MonoBehaviour
         map.allegianceColours.Add(1, Colour.GREEN);
         map.allegianceColours.Add(2, Colour.RED);
 
+        map.PlaceTreasure(20, 1, 1);
+        map.PlaceTreasure(100, map.height - 1, map.width - 3);
+        map.PlaceTreasure(10, 1, 1);
     }
 
     float randomDelay = 2f;

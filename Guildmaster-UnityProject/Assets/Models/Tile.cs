@@ -89,4 +89,10 @@ public class Tile {
             return diagonalModifier;
         }
     }
+
+    public Treasure AddTreasure(int gp) {
+        Treasure treasure = new Treasure(gp, "Loot", this);
+        this.treasure.Add(treasure);
+        return treasure;
+    }
 }

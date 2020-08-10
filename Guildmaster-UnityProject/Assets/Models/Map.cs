@@ -10,6 +10,10 @@ public class Map {
         get; 
         protected set;
     }
+    public Action<Treasure> onTreasureGraphicChanged {
+        get; 
+        protected set;
+    }
     public Action<Character> onCharacterGraphicChanged {
         get; 
         protected set;
@@ -82,12 +86,30 @@ public class Map {
         return true;
     }
 
+    // TODO: Will become more complicated with more varied treasure (items, weapons, key items, etc)
+    public bool PlaceTreasure(int gp, int x, int y) {
+        Tile tile = GetTileAt(x, y);
+        if (tile == null) {
+            return false;
+        }
+
+        tile.AddTreasure(gp);
+        return true;
+    }
+
     public void RegisterTileGraphicChangedCallback(Action<Tile> callback) {
         onTileGraphicChanged += callback;
     }
 
     public void UnregisterTileGraphicChangedCallback(Action<Tile> callback) {
         onTileGraphicChanged -= callback;
+    }
+    public void RegisterTreasureGraphicChangedCallback(Action<Treasure> callback) {
+        onTreasureGraphicChanged += callback;
+    }
+
+    public void UnregisterTreasureGraphicChangedCallback(Action<Treasure> callback) {
+        onTreasureGraphicChanged -= callback;
     }
     public void RegisterCharacterGraphicChangedCallback(Action<Character> callback) {
         onCharacterGraphicChanged += callback;
