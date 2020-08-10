@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 
 public class Map {
-    public List<Character> characters;
+    public List<Character> characters;  // The index of this list is used for logic, DO NOT REMOVE FROM THIS LIST (TODO: Convert to Dictionary<int, Character> so we can preserve indices on remove)
     public Dictionary<int, List<Character>> charactersByAllegiance;
     public Dictionary<int, Colour> allegianceColours;
 

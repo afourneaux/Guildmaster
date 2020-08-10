@@ -95,4 +95,45 @@ public class Tile {
         this.treasure.Add(treasure);
         return treasure;
     }
+    
+    public List<Tile> GetAdjacentTiles() {
+        List<Tile> adjacents = new List<Tile>();
+
+        Tile tile;
+
+        tile = map.GetTileAt(x, y + 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x + 1, y + 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x + 1, y);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x + 1, y - 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x, y - 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x - 1, y - 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x - 1, y);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x - 1, y + 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+
+        return adjacents;
+    }
 }
