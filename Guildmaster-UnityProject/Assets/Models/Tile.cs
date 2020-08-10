@@ -95,7 +95,7 @@ public class Tile {
         this.treasure.Add(treasure);
         return treasure;
     }
-    
+
     public List<Tile> GetAdjacentTiles() {
         List<Tile> adjacents = new List<Tile>();
 

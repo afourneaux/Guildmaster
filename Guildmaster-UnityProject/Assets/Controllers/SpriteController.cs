@@ -151,6 +151,7 @@ public class SpriteController : MonoBehaviour
         treasureGO.transform.position = new Vector3(treasure.tile.x, treasure.tile.y, 0);
         treasureGO.transform.SetParent(this.transform, true);
         SpriteRenderer treasureSR = treasureGO.AddComponent<SpriteRenderer>();
+        treasureSR.sortingLayerName = "Items";
 
         treasureGOMap.Add(treasure, treasureGO);
 
