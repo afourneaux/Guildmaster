@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Tile {
@@ -47,6 +48,8 @@ public class Tile {
 
     public Character character;
 
+    public List<Treasure> treasure;
+
     // TODO: Some extra functionality like Cover, Secret, etc etc etc we'll worry about that later
 
     public Tile(Map m, int x, int y, int cte = 1, int ctl = 1, int s = 0) {
@@ -56,6 +59,8 @@ public class Tile {
         sprite = s;
         this.x = x;
         this.y = y;
+
+        treasure = new List<Treasure>();
     }
 
     public float CostToEnterTile(Tile otherTile, bool isAffectedByTerrain = true) {
