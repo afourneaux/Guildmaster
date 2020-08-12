@@ -50,6 +50,9 @@ TagManager:
   - name: MapFeatures
     uniqueID: 3849679859
     locked: 0
+  - name: Items
+    uniqueID: 286619901
+    locked: 0
   - name: Characters
     uniqueID: 2854669023
     locked: 0

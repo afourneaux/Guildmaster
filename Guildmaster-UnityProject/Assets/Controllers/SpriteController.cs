@@ -80,8 +80,8 @@ public class SpriteController : MonoBehaviour
             return;
         }
 
-        if (treasure.tile == null) {
-            // The treasure is not on the ground. Do not display.
+        if (treasure.tile == null || treasure.getNoticedBy().Count == 0) {
+            // The treasure is not on the ground or has not been found. Do not display.
             treasureGO.GetComponent<SpriteRenderer>().enabled = false;
         } else {
             treasureGO.GetComponent<SpriteRenderer>().enabled = true;

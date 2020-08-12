@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class WanderBehaviour {
 
-/* This WanderBehaviour static class contains the various behaviours the Character AI is capable of.
+/* Characters with Wander Behaviour will wander aimlessly around the map.
  * Each behaviour comes with its own "weigh" function, which determines the probability that a character
  * will choose this behaviour, based on their current status. For example, a character with low health and
  * many potions on-hand might be very inclined to quaff a healing potion, and therefore the weigh function
@@ -28,7 +28,7 @@ public class WanderBehaviour {
         }
         int weight = 0;
         if (chara.behaviourState == BehaviourState.EXPLORING) {
-            weight = 10;
+            weight = GameController.MAX_STAT_SCORE;
         }
 
         chara.AIWeights.Add("wander", weight);    // TODO: Base on some personality trait
@@ -36,11 +36,11 @@ public class WanderBehaviour {
 
     // Move a few tiles
     public static void Wander(Character chara, float deltaTime) {
-        if (chara.variables.TryGetValue("AI_wandering", out object wanderingObj) && (bool) wanderingObj == true) {
+        if (chara.variables.TryGetValue("wander_wandering", out object wanderingObj) && (bool) wanderingObj == true) {
             // If a wander is ongoing and we have not arrived at the new tile, there is nothing more to do
             if (chara.variables.TryGetValue("sourceTile", out object sourceObj) == false || sourceObj == null) {
                 // End case: If we have arrived at our destination, remove the wandering flag and reset the AI
-                chara.variables.Remove("AI_wandering");
+                chara.variables.Remove("wander_wandering");
                 chara.currentBehaviour = "deciding";
             }
         } else {
@@ -97,8 +97,8 @@ public class WanderBehaviour {
             // TODO: Weighted choice to make more realistic wandering
             int choice = UnityEngine.Random.Range(0, directions.Count);
             Tile destination = directions[choice];
-            chara.BeginMove(destination);
-            chara.variables.Add("AI_wandering", true);
+            TacticalController.BasicPathfindToCoordinates(chara, destination.x, destination.y);
+            chara.variables.Add("wander_wandering", true);
         }
     }
 
@@ -112,29 +112,29 @@ public class WanderBehaviour {
         }
         int weight = 0;
         if (chara.behaviourState == BehaviourState.EXPLORING) {
-            weight = 5;
+            weight = GameController.MAX_STAT_SCORE / chara.constitution;
         }
         if (chara.behaviourState == BehaviourState.RESTING) {
-            weight = 10;
+            weight = GameController.MAX_STAT_SCORE;
         }
 
-        chara.AIWeights.Add("rest", weight);    // TODO: Base on some personality trait
+        chara.AIWeights.Add("rest", weight);
     }
 
     // Stand in place
     public static void Rest(Character chara, float deltaTime) {
-        if (chara.variables.TryGetValue("AI_timeResting", out object timeObj)) {
+        if (chara.variables.TryGetValue("wander_timeResting", out object timeObj)) {
             float time = (float) timeObj;
             time -= deltaTime;
             if (time <= 0) {
                 //Debug.Log("ACTION: " + name + " finishes their rest" + " - " + Time.time);
-                chara.variables.Remove("AI_timeResting");
+                chara.variables.Remove("wander_timeResting");
                 chara.currentBehaviour = "deciding";
             } else {
-                chara.variables["AI_timeResting"] = time;
+                chara.variables["wander_timeResting"] = time;
             }
         } else {
-            chara.variables.Add("AI_timeResting", 1f);  // Rest for 1 second
+            chara.variables.Add("wander_timeResting", 1f);  // Rest for 1 second
             //Debug.Log("ACTION: " + name + " begins resting" + " - " + Time.time);
         }
     }
@@ -154,14 +154,14 @@ public class WanderBehaviour {
     // DEBUG: Just a sample
     // Teleport to a random space on the grid, then wait for 2 seconds
     public static void Teleport(Character chara, float deltaTime) {
-        if (chara.variables.TryGetValue("AI_teleportCooldown", out object timeObj)) {
+        if (chara.variables.TryGetValue("wander_teleportCooldown", out object timeObj)) {
             float time = (float) timeObj;
             time -= deltaTime;
             if (time <= 0) {
-                chara.variables.Remove("AI_teleportCooldown");
+                chara.variables.Remove("wander_teleportCooldown");
                 chara.currentBehaviour = "deciding";
             } else {
-                chara.variables["AI_teleportCooldown"] = time;
+                chara.variables["wander_teleportCooldown"] = time;
             }
         } else {
             int x;
@@ -176,7 +176,7 @@ public class WanderBehaviour {
             } while (tile.character != null);
             chara.SetPosition(x, y);
             chara.SetTile(tile);
-            chara.variables.Add("AI_teleportCooldown", 2f);  // Rest for 2 seconds
+            chara.variables.Add("wander_teleportCooldown", 2f);  // Rest for 2 seconds
         }
     }
 }

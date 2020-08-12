@@ -4,11 +4,12 @@ using UnityEngine;
 
 public class CombatBehaviour {
     // See WanderBehaviour for a description of how these Behaviour classes are meant to work
+    // Characters with this behaviour will engage in combat with their enemies
     // Important note: All distance calculations should be based on character x and y position, not their tile's x and y
 
     // Actions:
     //  Attack
-    //  Seek
+    //  Reposition
     //  Flee
 
     static float DEFAULT_RANGE = 1.5f;
@@ -61,7 +62,9 @@ public class CombatBehaviour {
                 float distance = chara.GetDistanceToTarget(target);
 
                 // Prioritise close-by enemies
-                workingWeight /= distance;
+                if (distance > 1) {
+                    workingWeight /= distance;
+                }
 
                 if (distance > DEFAULT_RANGE) {
                     // De-prioritise out of range enemies again
@@ -86,25 +89,27 @@ public class CombatBehaviour {
         object seekWeightsObj;
         if (chara.variables.TryGetValue("combat_seekWeights", out seekWeightsObj) == false) {
             Debug.LogError(chara.name + " is trying to seek, but no seekWeights has been defined");
+            chara.currentBehaviour = "deciding";
             return;
         }
-        chara.variables.Remove("combat_target");
         Dictionary<int, int> seekWeights = (Dictionary<int, int>) seekWeightsObj;
 
         if (seekWeights.Count == 0) {
-            // No nearby enemies, hold position
+            Debug.LogError(chara.name + " is trying to seek, but seekWeights is empty");
+            chara.currentBehaviour = "deciding";
             return;
         }
+        chara.variables.Remove("combat_target");
 
-        List<int> options = new List<int>();
+        List<int> weights = new List<int>();
         Dictionary<int, int> indices = new Dictionary<int, int>();
         int index = 0;
         foreach (int target in seekWeights.Keys) {
-            options.Add(seekWeights[target]);
+            weights.Add(seekWeights[target]);
             indices.Add(index, target);
             index++;
         }
-        int toSeek = indices[TacticalController.MakeDecision(options)];
+        int toSeek = indices[TacticalController.MakeDecision(weights)];
         chara.variables.Add("combat_target", toSeek);
         Debug.Log(chara.name + " is now seeking " + TacticalController.instance.map.characters[toSeek].name);
         chara.currentBehaviour = "deciding";
@@ -144,55 +149,7 @@ public class CombatBehaviour {
             }
             
             // Otherwise, approach the target
-            // SUPER BASIC PATHFINDING, replace with A* when implemented
-            if (chara.isMoving == true) {
-                return;
-            }
-
-            int deltaX = 0;
-            int deltaY = 0;
-            if (target.x > chara.x) {
-                deltaX = 1;
-            }
-            if (target.x < chara.x) {
-                deltaX = -1;
-            }
-            if (target.y > chara.y) {
-                deltaY = 1;
-            }
-            if (target.y < chara.y) {
-                deltaY = -1;
-            }
-            Tile destination = TacticalController.instance.map.GetTileAt(chara.currentTile.x + deltaX, chara.currentTile.y + deltaY);
-
-            // If the next tile is blocked, go around
-            if (destination.character != null) {
-                // If the diagonal is blocked, try an orthogonal movement
-                if (deltaY != 0 && deltaX != 0) {
-                    destination = TacticalController.instance.map.GetTileAt(chara.currentTile.x, chara.currentTile.y + deltaY);
-                    if (destination.character != null) {
-                        destination = TacticalController.instance.map.GetTileAt(chara.currentTile.x + deltaX, chara.currentTile.y);
-                    }
-                }
-                // If orthogonal movement is blocked, try diagonal
-                if (deltaY != 0) {
-                    destination = TacticalController.instance.map.GetTileAt(chara.currentTile.x + 1, chara.currentTile.y + deltaY);
-                    if (destination.character != null) {
-                        destination = TacticalController.instance.map.GetTileAt(chara.currentTile.x - 1, chara.currentTile.y + deltaY);
-                    }
-                } else if (deltaX != 0) {
-                    destination = TacticalController.instance.map.GetTileAt(chara.currentTile.x + deltaX, chara.currentTile.y + 1);
-                    if (destination.character != null) {
-                        destination = TacticalController.instance.map.GetTileAt(chara.currentTile.x + deltaX, chara.currentTile.y - 1);
-                    }
-                }
-            }
-            // If all movement is blocked, just wait a bit
-            // TODO: After waiting enough time, find another target
-            if (destination.character != null) {
-                return;
-            }
-            chara.BeginMove(destination);
+            TacticalController.BasicPathfindToCoordinates(chara, target.x, target.y);
         }
     }
 

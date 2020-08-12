@@ -5,6 +5,7 @@ public class Map {
     public List<Character> characters;  // The index of this list is used for logic, DO NOT REMOVE FROM THIS LIST (TODO: Convert to Dictionary<int, Character> so we can preserve indices on remove)
     public Dictionary<int, List<Character>> charactersByAllegiance;
     public Dictionary<int, Colour> allegianceColours;
+    public List<Treasure> treasure;
 
     public Action<Tile> onTileGraphicChanged {
         get; 
@@ -48,6 +49,7 @@ public class Map {
         characters = new List<Character>();
         allegianceColours = new Dictionary<int, Colour>();
         charactersByAllegiance = new Dictionary<int, List<Character>>();
+        treasure = new List<Treasure>();
 
         Random rand = new Random(); // Temporary
 
@@ -93,8 +95,17 @@ public class Map {
             return false;
         }
 
-        tile.AddTreasure(gp);
+        Treasure treas = tile.AddTreasure(gp);
+        treasure.Add(treas);
         return true;
+    }
+
+    public bool RemoveTreasure(Treasure treas) {
+        if (treasure.Contains(treas) == false) {
+            return false;
+        }
+        treasure.Remove(treas);
+        return treas.RemoveFromTile();
     }
 
     public void RegisterTileGraphicChangedCallback(Action<Tile> callback) {

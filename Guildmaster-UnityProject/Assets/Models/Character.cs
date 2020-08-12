@@ -61,6 +61,7 @@ public class Character {
     public float timeSinceLastBehaviourChange;
 
     public Dictionary<Character, float> noticedCharacters;
+    public List<Treasure> noticedTreasure;
     public List<Character> noticedBy;
 
     // These base stats will be shared by all Characters, so they are not in a component.
@@ -73,6 +74,7 @@ public class Character {
     public int perception; // Noticing distance
     public int intelligence; // How long before forgetting someone
     public int bravery; // How quickly a character returns from running
+    public int greed;
 
     // TODO: Make more sophisticated
     int _HP;
@@ -139,8 +141,11 @@ public class Character {
         protected set;
     }
 
-    // All characters of the same allegiance are on the same side in this conflict
+    // All characters of the same allegiance are on the same side in a conflict
     public int allegiance;
+
+    // TODO: Make more generic to encompass all carried gear
+    public List<Treasure> treasure;
 
     // Sample components:
     // Exploration AI
@@ -165,7 +170,10 @@ public class Character {
         AIWeighOptions = new Dictionary<string, Action<Character>>();
 
         noticedCharacters = new Dictionary<Character, float>();
+        noticedTreasure = new List<Treasure>();
         noticedBy = new List<Character>();
+
+        treasure = new List<Treasure>();
 
         isMoving = false;
         healthState = HealthState.CONCSCIOUS;
@@ -177,7 +185,7 @@ public class Character {
     }
 
     // TODO: Base on some grand data structure of character stats
-    public void SetStats(int strength, int dexterity, int precision, int constitution, int perception, int intelligence, int bravery) {
+    public void SetStats(int strength, int dexterity, int precision, int constitution, int perception, int intelligence, int bravery, int greed) {
         this.strength = strength;
         this.dexterity = dexterity;
         this.precision = precision;
@@ -185,6 +193,7 @@ public class Character {
         this.perception = perception;
         this.intelligence = intelligence;
         this.bravery = bravery;
+        this.greed = greed;
 
         // TODO: Base on level? Some other calculation?
         this.HP = constitution;
@@ -235,6 +244,7 @@ public class Character {
         variables.Add("sourceTile", currentTile);
         currentTile = destination;
         currentTile.character = this;
+        isMoving = true;
     }
 
     void UpdateMove(Character chara, float deltaTime) {
@@ -243,6 +253,7 @@ public class Character {
             if ((source == currentTile) || (x == currentTile.x && y == currentTile.y)) {
                 // We have reached our destination
                 variables.Remove("sourceTile");
+                isMoving = false;
                 return;
             }
 
@@ -256,9 +267,6 @@ public class Character {
             newY = Mathf.Clamp(newY, Mathf.Min(source.y, currentTile.y), Mathf.Max(source.y, currentTile.y) );
 
             SetPosition(newX, newY);
-            isMoving = true;
-        } else {
-            isMoving = false;
         }
     }
 
@@ -369,6 +377,18 @@ public class Character {
     // line of sight is unobstructed, that other character is noticed. Characters will remember
     // other characters for a certain amount of time after they lose sight, then forget about them.
     public void UpdateNotice(Character chara, float deltaTime) {
+        // Notice characters
+        UpdateNoticeCharacters(chara, deltaTime);
+
+        // Forget treasure no longer on the map
+        if (chara.allegiance == 1) {    // TODO: Will non-party ever need to notice loot? For now, assume no
+            UpdateNoticeTreasure(chara);
+        }
+
+        // Notice other map features...
+    }
+
+    private void UpdateNoticeCharacters(Character chara, float deltaTime) {
         foreach (Character other in TacticalController.instance.map.characters) {
             if (other == chara) {
                 // Don't worry about noticing oneself
@@ -376,7 +396,7 @@ public class Character {
             }
             double distance = GetDistanceToTarget(other);
 
-            if (distance <= chara.perception) {
+            if (distance <= chara.perception) { // TODO: Sophistication
                 if (chara.noticedCharacters.ContainsKey(other) == false) {
                     // Character was noticed when not noticed before
                     chara.noticedCharacters.Add(other, 0f);
@@ -404,10 +424,52 @@ public class Character {
         }
     }
 
+    private void UpdateNoticeTreasure(Character chara) {
+        List<Treasure> toRemove = new List<Treasure>();
+        foreach (Treasure treas in chara.noticedTreasure) {
+            if (treas.tile == null) {
+                toRemove.Add(treas);
+            }
+        }
+        chara.noticedTreasure.RemoveAll((t) => toRemove.Contains(t));
+        // Notice treasure
+        List<Tile> tilesSeen = new List<Tile>();
+        List<Tile> tilesUnseen = new List<Tile>();
+        foreach (Treasure treas in TacticalController.instance.map.treasure) {
+            if (chara.noticedTreasure.Contains(treas)) {
+                // Character has already noticed this treasure
+                continue;
+            }
+            if (tilesSeen.Contains(treas.tile)) {
+                // We have already spotted treasure on this tile
+                chara.noticedTreasure.Add(treas);
+                treas.NoticeBy(chara);
+                continue;
+            }
+            if (tilesUnseen.Contains(treas.tile)) {
+                // We have already determined that we cannot see this tile
+                continue;
+            }
+
+            double distance = GetDistanceToTile(treas.tile);
+
+            if (distance <= chara.perception) {
+                tilesSeen.Add(treas.tile);
+                chara.noticedTreasure.Add(treas);
+                treas.NoticeBy(chara);
+            } else {
+                tilesUnseen.Add(treas.tile);
+            }
+        }
+    }
+
     // TODO: The Sqrt function is expensive, can we cheapen it? Keep an eye on performance here
     // TODO: make an IsInRange function given a desired range, returns bool. That way we can square
     //       the desired range for comparison instead of Sqrt the actual distance
     public float GetDistanceToTarget(Character other) {
+        return (float) Math.Sqrt(Math.Pow(x - other.x, 2) + Math.Pow(y - other.y, 2));
+    }
+    public float GetDistanceToTile(Tile other) {
         return (float) Math.Sqrt(Math.Pow(x - other.x, 2) + Math.Pow(y - other.y, 2));
     }
 
@@ -416,6 +478,12 @@ public class Character {
         // TODO: Implement dying and stable
         Debug.Log(name + " is dead!");
         healthState = HealthState.DEAD;
+
+        // Drop all treasure on the ground
+        // TODO: Generate treasure with more than just gp value
+        foreach(Treasure treas in treasure) {
+            TacticalController.instance.map.PlaceTreasure(treas.gp, currentTile.x, currentTile.y);
+        }
     }
 
     // HP was 0, now restored to above 0
