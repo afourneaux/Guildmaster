@@ -29,7 +29,7 @@ public class Treasure {
         get {
             return _tile;
         }
-        private set {
+        set {
             if (_tile != value) {
                 _tile = value;
                 if (TacticalController.instance.map.onTreasureGraphicChanged != null) {

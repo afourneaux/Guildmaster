@@ -76,14 +76,16 @@ public class SpriteController : MonoBehaviour
     void OnTreasureGraphicChanged(Treasure treasure) {
         GameObject treasureGO;
         if (treasureGOMap.TryGetValue(treasure, out treasureGO) == false) {
-            Debug.LogError("SpriteController::OnTreasureGraphicChanged - Treasure not found");
+            // This is a new treasure object, perhaps dropped from an event or character
+            CreateTreasure(treasure);
             return;
         }
-
+        
         if (treasure.tile == null || treasure.getNoticedBy().Count == 0) {
             // The treasure is not on the ground or has not been found. Do not display.
             treasureGO.GetComponent<SpriteRenderer>().enabled = false;
         } else {
+            treasureGO.transform.position = new Vector3(treasure.tile.x, treasure.tile.y, 0);
             treasureGO.GetComponent<SpriteRenderer>().enabled = true;
             Sprite sprite;
             if (spritesMap.TryGetValue(treasure.sprite, out sprite) == false) {

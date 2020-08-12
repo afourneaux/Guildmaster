@@ -26,22 +26,25 @@ public class TacticalController : MonoBehaviour
         Character chara1 = new Character("Crimble Nottsworth", map.GetTileAt(0, 0), 1);
         Character chara2 = new Character("Zachary Nottingham", map.GetTileAt(0, map.height / 2), 1);
         Character chara3 = new Character("Dwayne \"The Rock\" Johnson", map.GetTileAt(0, map.height - 1), 1);
-        chara1.SetStats(10, 10, 10, 10, 5, 10, 10, 10);
-        chara2.SetStats(20, 5, 20, 3, 5, 5, 5, 30);
-        chara3.SetStats(3, 15, 3, 20, 5, 10, 10, 50);
+        chara1.SetStats(10, 10, 10, 10, 10, 10, 10, 100);
+        chara2.SetStats(50, 5, 100, 30, 15, 5, 5, 30);
+        chara3.SetStats(30, 15, 30, 20, 5, 10, 10, 50);
+        // TODO: Register components rather than every single behaviour
         chara1.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
         chara1.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
-        chara1.RegisterAIBehaviour("teleport", WanderBehaviour.Teleport, WanderBehaviour.WeighTeleport);
+        //chara1.RegisterAIBehaviour("teleport", WanderBehaviour.Teleport, WanderBehaviour.WeighTeleport);
         chara1.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
         chara1.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
         chara1.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
         chara1.RegisterAIBehaviour("loot", LootBehaviour.Loot, LootBehaviour.WeighLoot);
+        chara1.RegisterOnUpdate(CombatBehaviour.UpdateCombatAwareness);
         chara2.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
         chara2.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
         chara2.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
         chara2.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
         chara2.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
         chara2.RegisterAIBehaviour("loot", LootBehaviour.Loot, LootBehaviour.WeighLoot);
+        chara2.RegisterOnUpdate(CombatBehaviour.UpdateCombatAwareness);
         chara3.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
         chara3.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
         chara3.RegisterAIBehaviour("teleport", WanderBehaviour.Teleport, WanderBehaviour.WeighTeleport);
@@ -50,6 +53,7 @@ public class TacticalController : MonoBehaviour
         chara3.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
         chara3.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
         chara3.RegisterAIBehaviour("loot", LootBehaviour.Loot, LootBehaviour.WeighLoot);
+        chara3.RegisterOnUpdate(CombatBehaviour.UpdateCombatAwareness);
         chara1.sprite = chara2.sprite = chara3.sprite = "knight";
         chara1.allegiance = chara2.allegiance = chara3.allegiance = 1;
         map.PlaceCharacter(chara1);
@@ -59,7 +63,7 @@ public class TacticalController : MonoBehaviour
         // Generate enemies. This data should come from the strategic layer, placing enemies into spawn points determined
         // by the map generation file
         Character knifey = new Character("Knifey Knifesworth", map.GetTileAt(map.width - 1, map.height / 2), 2);
-        knifey.SetStats(5, 20, 10, 30, 2, 2, 10, 0);
+        knifey.SetStats(10, 20, 10, 100, 2, 2, 10, 0);
         knifey.sprite = "knifer";
         knifey.allegiance = 2;
         knifey.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);

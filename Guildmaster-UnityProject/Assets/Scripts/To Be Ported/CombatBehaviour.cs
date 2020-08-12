@@ -204,4 +204,12 @@ public class CombatBehaviour {
 
         return targets;
     }
+
+    public static void UpdateCombatAwareness(Character chara, float deltaTime) {
+        if (chara.currentBehaviour == "deciding") {
+            if (chara.variables.ContainsKey("combat_target") && chara.behaviourState != BehaviourState.COMBAT) {
+                chara.variables.Remove("combat_target");
+            }
+        }
+    }
 }

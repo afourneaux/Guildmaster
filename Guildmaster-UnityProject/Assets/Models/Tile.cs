@@ -90,10 +90,8 @@ public class Tile {
         }
     }
 
-    public Treasure AddTreasure(int gp) {
-        Treasure treasure = new Treasure(gp, "Loot", this);
+    public void AddTreasure(Treasure treasure) {
         this.treasure.Add(treasure);
-        return treasure;
     }
 
     public List<Tile> GetAdjacentTiles() {

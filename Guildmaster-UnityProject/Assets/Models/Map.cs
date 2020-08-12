@@ -89,15 +89,27 @@ public class Map {
     }
 
     // TODO: Will become more complicated with more varied treasure (items, weapons, key items, etc)
-    public bool PlaceTreasure(int gp, int x, int y) {
+    public Treasure PlaceTreasure(int gp, int x, int y) {
         Tile tile = GetTileAt(x, y);
         if (tile == null) {
-            return false;
+            return null;
         }
 
-        Treasure treas = tile.AddTreasure(gp);
+        Treasure treas = new Treasure(gp, "Loot", tile);
+        tile.AddTreasure(treas);
         treasure.Add(treas);
-        return true;
+        return treas;
+    }
+
+    public Treasure PlaceTreasure(Treasure treas, int x, int y) {
+        Tile tile = GetTileAt(x, y);
+        if (tile == null) {
+            return null;
+        }
+        treas.tile = tile;
+        tile.AddTreasure(treas);
+        treasure.Add(treas);
+        return treas;
     }
 
     public bool RemoveTreasure(Treasure treas) {

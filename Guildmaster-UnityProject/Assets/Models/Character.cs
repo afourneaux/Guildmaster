@@ -482,8 +482,13 @@ public class Character {
         // Drop all treasure on the ground
         // TODO: Generate treasure with more than just gp value
         foreach(Treasure treas in treasure) {
-            TacticalController.instance.map.PlaceTreasure(treas.gp, currentTile.x, currentTile.y);
+            TacticalController.instance.map.PlaceTreasure(treas, currentTile.x, currentTile.y);
         }
+
+        noticedCharacters.Clear();
+        noticedTreasure.Clear();
+
+        currentTile.character = null;
     }
 
     // HP was 0, now restored to above 0

@@ -77,8 +77,8 @@ public class LootBehaviour {
                 Debug.Log(chara.name + " has arrived to loot at x: " + treasure.tile.x + " y:" + treasure.tile.y);
                 while (chara.currentTile.treasure.Count > 0) {  // TODO: Also check for character's carrying capacity
                     Treasure topOfPile = chara.currentTile.treasure[0]; 
-                    chara.treasure.Add(topOfPile);
                     TacticalController.instance.map.RemoveTreasure(topOfPile);
+                    chara.treasure.Add(topOfPile);
                 }
                 chara.variables.Remove("loot_target");
                 chara.currentBehaviour = "deciding";
