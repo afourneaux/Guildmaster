@@ -22,6 +22,13 @@ public enum BehaviourState {
     SOCIAL
 }
 
+public enum HealthState {
+    CONCSCIOUS,
+    STABLE,
+    DYING,
+    DEAD
+}
+
 public class Character {
     // Tracks variables and their values from components
     public Dictionary<string, object> variables;
@@ -92,12 +99,9 @@ public class Character {
         }
     }
 
-    public bool isDying {
-        get; protected set;
-    }
-
-    public bool isDead {
-        get; protected set;
+    public HealthState healthState {
+        get;
+        private set;
     }
 
     public string name {
@@ -164,7 +168,7 @@ public class Character {
         noticedBy = new List<Character>();
 
         isMoving = false;
-        isDying = isDead = false;
+        healthState = HealthState.CONCSCIOUS;
 
         RegisterOnUpdate(UpdateMove);
         RegisterOnUpdate(UpdateNotice);
@@ -187,15 +191,25 @@ public class Character {
     }
 
     public void Update(float deltaTime) {
-        if (isDying) {
-            // Do dying things, like bleeding
-        } else if (isDead) {
-            // Do dead things, like lie still
-        } else {
-            // Do alive things, like explore
-            if (onUpdate != null) {
-                onUpdate(this, deltaTime);
-            }
+        switch (healthState) {
+            case HealthState.DEAD:
+                // Do dead things, like lie still
+                break;
+            case HealthState.DYING:
+                // Do dying things, like bleeding
+                break;
+            case HealthState.STABLE:
+                // Do unconscious things, like lie still but not in a worrying way
+                break;
+            case HealthState.CONCSCIOUS:
+                // Do alive things, like explore
+                if (onUpdate != null) {
+                    onUpdate(this, deltaTime);
+                }
+                break;
+            default:
+                Debug.LogError("Character " + name + " is in invalid health state: " + healthState);
+                break;
         }
     }
 
@@ -278,7 +292,7 @@ public class Character {
             if (other.allegiance == allegiance) {
                 alliesNearby = true;
             } else {
-                if (!other.isDead && !other.isDying) {
+                if (other.healthState == HealthState.CONCSCIOUS) {
                     threatsNearby = true;
                 }
                 enemiesNearby = true;
@@ -399,14 +413,14 @@ public class Character {
 
     // HP just hit 0
     public void GoDown() {
-        // TODO: Differentiate isDying and isDead
+        // TODO: Implement dying and stable
         Debug.Log(name + " is dead!");
-        isDying = isDead = true;
+        healthState = HealthState.DEAD;
     }
 
     // HP was 0, now restored to above 0
     public void GetUp() {
-        isDying = isDead = false;
+        healthState = HealthState.CONCSCIOUS;
     }
 
     public bool RegisterAIBehaviour(string name, Action<Character, float> behaviour, Action<Character> weight) {

@@ -26,7 +26,7 @@ public class CombatBehaviour {
             // If we have a healthy target within reach, do not seek a new one
             if (chara.variables.TryGetValue("combat_target", out object targetobj)) {
                 Character target = TacticalController.instance.map.characters[(int) targetobj];
-                if (target.isDead == false/* && chara.GetDistanceToTarget(target) <= DEFAULT_RANGE*/ ) {
+                if (target.healthState == HealthState.CONCSCIOUS ) {
                     return;
                 }
                 // Remove our invalid target
@@ -49,13 +49,12 @@ public class CombatBehaviour {
                     // De-prioritise fleeing enemies
                     workingWeight = 20;
                 }
-                if (target.isDying) {
+                if (target.healthState == HealthState.DYING || target.healthState == HealthState.STABLE) {
                     // REALLY De-prioritise downed enemies
                     workingWeight = 1;
                 }
-                if (target.isDead) {
+                if (target.healthState == HealthState.DEAD) {
                     // Don't attack dead people
-                    workingWeight = 0;
                     continue;
                 }
 
