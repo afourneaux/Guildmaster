@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Tile {
@@ -83,5 +84,46 @@ public class Tile {
         } else {
             return diagonalModifier;
         }
+    }
+
+    public List<Tile> GetAdjacentTiles() {
+        List<Tile> adjacents = new List<Tile>();
+
+        Tile tile;
+
+        tile = map.GetTileAt(x, y + 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x + 1, y + 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x + 1, y);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x + 1, y - 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x, y - 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x - 1, y - 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x - 1, y);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+        tile = map.GetTileAt(x - 1, y + 1);
+        if (tile != null) {
+            adjacents.Add(tile);
+        }
+
+        return adjacents;
     }
 }

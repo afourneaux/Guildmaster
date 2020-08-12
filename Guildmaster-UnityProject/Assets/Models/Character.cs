@@ -53,7 +53,7 @@ public class Character {
     }
     public float timeSinceLastBehaviourChange;
 
-    Dictionary<Character, float> noticedCharacters;
+    public Dictionary<Character, float> noticedCharacters;
     public List<Character> noticedBy;
 
     // These base stats will be shared by all Characters, so they are not in a component.
@@ -65,7 +65,41 @@ public class Character {
     public int dexterity; // move speed
     public int perception; // Noticing distance
     public int intelligence; // How long before forgetting someone
-    public int bravery;
+    public int bravery; // How quickly a character returns from running
+
+    // TODO: Make more sophisticated
+    int _HP;
+    public int HP {
+        get {
+            return _HP;
+        }
+        set {
+            if (_HP != value) {
+                if (_HP > 0 && value <= 0) {
+                    GoDown();
+                }
+                if (_HP <= 0 && value > 0) {
+                    GetUp();
+                }
+
+                _HP = value;
+
+                // Update the health bar
+                if (TacticalController.instance.map.onCharacterGraphicChanged != null) {
+                    TacticalController.instance.map.onCharacterGraphicChanged(this);
+                }
+            }
+        }
+    }
+
+    public bool isDying {
+        get; protected set;
+    }
+
+    public bool isDead {
+        get; protected set;
+    }
+
     public string name {
         get;
         protected set;
@@ -85,6 +119,7 @@ public class Character {
             }
         }
     }
+    public bool isMoving;
 
     public float x {
         get;
@@ -128,15 +163,39 @@ public class Character {
         noticedCharacters = new Dictionary<Character, float>();
         noticedBy = new List<Character>();
 
+        isMoving = false;
+        isDying = isDead = false;
+
         RegisterOnUpdate(UpdateMove);
         RegisterOnUpdate(UpdateNotice);
         RegisterOnUpdate(UpdateBehaviourState);
         RegisterOnUpdate(UpdateAI);
     }
 
+    // TODO: Base on some grand data structure of character stats
+    public void SetStats(int strength, int dexterity, int precision, int constitution, int perception, int intelligence, int bravery) {
+        this.strength = strength;
+        this.dexterity = dexterity;
+        this.precision = precision;
+        this.constitution = constitution;
+        this.perception = perception;
+        this.intelligence = intelligence;
+        this.bravery = bravery;
+
+        // TODO: Base on level? Some other calculation?
+        this.HP = constitution;
+    }
+
     public void Update(float deltaTime) {
-        if (onUpdate != null) {
-            onUpdate(this, deltaTime);
+        if (isDying) {
+            // Do dying things, like bleeding
+        } else if (isDead) {
+            // Do dead things, like lie still
+        } else {
+            // Do alive things, like explore
+            if (onUpdate != null) {
+                onUpdate(this, deltaTime);
+            }
         }
     }
 
@@ -152,6 +211,10 @@ public class Character {
         }
         if (destination.character != null) {
             Debug.LogError("Character::BeginMove - " + name + " has been assigned an occupied tile! Allowing the move");
+        }
+        if (variables.ContainsKey("sourceTile")) {
+            Debug.LogError("Character::BeginMove - " + name + " already has a source tile!");
+            return;
         }
 
         currentTile.character = null;
@@ -179,6 +242,9 @@ public class Character {
             newY = Mathf.Clamp(newY, Mathf.Min(source.y, currentTile.y), Mathf.Max(source.y, currentTile.y) );
 
             SetPosition(newX, newY);
+            isMoving = true;
+        } else {
+            isMoving = false;
         }
     }
 
@@ -203,6 +269,7 @@ public class Character {
     // Change the current behaviour state based on the current context
     public void UpdateBehaviourState(Character chara, float deltaTime) {
         bool enemiesNearby = false;
+        bool threatsNearby = false;
         bool alliesNearby = false;
         // Take stock of surrounding characters
         foreach (Character other in noticedCharacters.Keys) {
@@ -211,6 +278,9 @@ public class Character {
             if (other.allegiance == allegiance) {
                 alliesNearby = true;
             } else {
+                if (!other.isDead && !other.isDying) {
+                    threatsNearby = true;
+                }
                 enemiesNearby = true;
             }
         }
@@ -221,7 +291,7 @@ public class Character {
             if (alliesNearby) {
                 recoveryModifier += 0.5f;
             }
-            if (enemiesNearby) {
+            if (threatsNearby) {
                 recoveryModifier -= 0.5f;
             }
             timeSinceLastBehaviourChange += deltaTime * recoveryModifier;
@@ -233,7 +303,7 @@ public class Character {
         }
 
         // If there are nearby enemies, go to Combat
-        if (enemiesNearby) {
+        if (threatsNearby) {
             behaviourState = BehaviourState.COMBAT;
             return;
         }
@@ -261,6 +331,9 @@ public class Character {
             Dictionary<int, string> optionNames = new Dictionary<int, string>();
             int index = 0;
             foreach (KeyValuePair<string, int> weight in AIWeights) {
+                if (weight.Value == 0) {
+                    continue;
+                }
                 options.Add(weight.Value);
                 optionNames.Add(index, weight.Key);
                 index++;
@@ -276,21 +349,28 @@ public class Character {
         AIBehaviours[currentBehaviour](chara, deltaTime);
     }
 
+
+    // On each step, Notice will check how far away each other character is. If another character
+    // is within a certain range (defined by both characters' stats and terrain conditions) and
+    // line of sight is unobstructed, that other character is noticed. Characters will remember
+    // other characters for a certain amount of time after they lose sight, then forget about them.
     public void UpdateNotice(Character chara, float deltaTime) {
         foreach (Character other in TacticalController.instance.map.characters) {
             if (other == chara) {
+                // Don't worry about noticing oneself
                 continue;
             }
-            // TODO: This is expensive, can we cheapen it? Keep an eye on performance here
-            double distance = Math.Sqrt(Math.Pow(chara.x - other.x, 2) + Math.Pow(chara.y - other.y, 2));
+            double distance = GetDistanceToTarget(other);
 
             if (distance <= chara.perception) {
                 if (chara.noticedCharacters.ContainsKey(other) == false) {
+                    // Character was noticed when not noticed before
                     chara.noticedCharacters.Add(other, 0f);
                     other.noticedBy.Add(chara);
                     TacticalController.instance.map.onCharacterGraphicChanged(other);
-                    Debug.Log(chara.name + " noticed " + other.name + " - Perception: " + chara.perception + " Distance: " + distance + ".");
+                    //Debug.Log(chara.name + " noticed " + other.name + " - Perception: " + chara.perception + " Distance: " + distance + ".");
                 } else {
+                    // Character was noticed again
                     chara.noticedCharacters[other] = 0f;
                 }
             } else {
@@ -301,13 +381,32 @@ public class Character {
                         chara.noticedCharacters.Remove(other);
                         other.noticedBy.Remove(chara);
                         TacticalController.instance.map.onCharacterGraphicChanged(other);
-                        Debug.Log(chara.name + " lost track of " + other.name + " - Intelligence: " + chara.intelligence + " time: " + timeSinceLost + ".");
+                        //Debug.Log(chara.name + " lost track of " + other.name + " - Intelligence: " + chara.intelligence + " time: " + timeSinceLost + ".");
                     } else {
                         chara.noticedCharacters[other] += deltaTime;
                     }
                 }
             }
         }
+    }
+
+    // TODO: The Sqrt function is expensive, can we cheapen it? Keep an eye on performance here
+    // TODO: make an IsInRange function given a desired range, returns bool. That way we can square
+    //       the desired range for comparison instead of Sqrt the actual distance
+    public float GetDistanceToTarget(Character other) {
+        return (float) Math.Sqrt(Math.Pow(x - other.x, 2) + Math.Pow(y - other.y, 2));
+    }
+
+    // HP just hit 0
+    public void GoDown() {
+        // TODO: Differentiate isDying and isDead
+        Debug.Log(name + " is dead!");
+        isDying = isDead = true;
+    }
+
+    // HP was 0, now restored to above 0
+    public void GetUp() {
+        isDying = isDead = false;
     }
 
     public bool RegisterAIBehaviour(string name, Action<Character, float> behaviour, Action<Character> weight) {

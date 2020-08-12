@@ -18,7 +18,6 @@ public class WanderBehaviour {
  */
 
 
-
     // Weigh the probability of selecting the Wander option based on the current context
     public static void WeighWander(Character chara) {
         if (chara.AIWeights.ContainsKey("wander")) {
@@ -95,6 +94,7 @@ public class WanderBehaviour {
                 chara.currentBehaviour = "deciding";
                 return;
             }
+            // TODO: Weighted choice to make more realistic wandering
             int choice = UnityEngine.Random.Range(0, directions.Count);
             Tile destination = directions[choice];
             chara.BeginMove(destination);
