@@ -58,7 +58,10 @@ public class LootBehaviour {
 
             // If in combat mode, drastically reduce weight
             if (chara.behaviourState == BehaviourState.COMBAT) {
-                workingTotalWeight /= (GameController.MAX_STAT_SCORE - chara.greed);
+                int divisor = GameController.MAX_STAT_SCORE - chara.greed;
+                if (divisor > 1) {
+                    workingTotalWeight /= divisor;
+                }
             }
             chara.AIWeights.Add("loot", Mathf.CeilToInt(workingTotalWeight));
             chara.variables["loot_weightByTreasure"] = weightByTreasure;

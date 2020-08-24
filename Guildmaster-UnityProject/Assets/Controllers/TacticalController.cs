@@ -29,10 +29,10 @@ public class TacticalController : MonoBehaviour
         chara1.SetStats(10, 10, 10, 10, 10, 10, 10, 100);
         chara2.SetStats(50, 5, 100, 30, 15, 5, 5, 30);
         chara3.SetStats(30, 15, 30, 20, 5, 10, 10, 50);
-        WanderBehaviour.Register(chara1, true);
+        WanderBehaviour.Register(chara1);
         WanderBehaviour.Register(chara2);
         WanderBehaviour.Register(chara3, true);
-        chara3.UnregisterAIBehaviour("teleport"); // Test: Only chara1 should teleport
+        chara3.UnregisterAIBehaviour("teleport"); // Test removing a registered behaviour
         LootBehaviour.Register(chara1);
         LootBehaviour.Register(chara2);
         LootBehaviour.Register(chara3);
@@ -69,8 +69,18 @@ public class TacticalController : MonoBehaviour
     void Update()
     {
         // test updating tile sprites
+        DebugTileFlashing();
+
+        // Update each character
+        foreach (Character chara in map.characters)
+        {
+            chara.Update(Time.deltaTime);
+        }
+    }
+
+    void DebugTileFlashing() {
         randomCountdown -= Time.deltaTime;
-        if (false && randomCountdown <= 0)
+        if (randomCountdown <= 0)
         {
             for (int x = 0; x < map.width; x++)
             {
@@ -80,12 +90,6 @@ public class TacticalController : MonoBehaviour
                 }
             }
             randomCountdown = randomDelay;
-        }
-
-        // Update each character
-        foreach (Character chara in map.characters)
-        {
-            chara.Update(Time.deltaTime);
         }
     }
 

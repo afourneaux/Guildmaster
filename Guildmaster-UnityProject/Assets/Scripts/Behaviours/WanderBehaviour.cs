@@ -188,7 +188,7 @@ public class WanderBehaviour
             return;
         }
 
-        chara.AIWeights.Add("teleport", 1);    // TODO: Base on some personality trait
+        chara.AIWeights.Add("teleport", 1);
     }
 
     // DEBUG: Just a sample

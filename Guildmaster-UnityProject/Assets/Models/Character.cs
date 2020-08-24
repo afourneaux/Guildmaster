@@ -353,7 +353,7 @@ public class Character {
             Dictionary<int, string> optionNames = new Dictionary<int, string>();
             int index = 0;
             foreach (KeyValuePair<string, int> weight in AIWeights) {
-                if (weight.Value == 0) {
+                if (weight.Value <= 0) {
                     continue;
                 }
                 options.Add(weight.Value);
