@@ -66,6 +66,8 @@ public class TacticalController : MonoBehaviour
     float randomDelay = 2f;
     float randomCountdown = 2f;
 
+
+    bool TEMP_gameover = false;
     void Update()
     {
         // test updating tile sprites
@@ -76,9 +78,25 @@ public class TacticalController : MonoBehaviour
         {
             chara.Update(Time.deltaTime);
         }
+
+        // Check mission success/failure (TODO: Optimise)
+        if (TEMP_gameover == false)
+        {
+            if (isMissionSuccess())
+            {
+                Debug.Log("Mission success!");
+                TEMP_gameover = true;
+            }
+            if (isMissionFailure())
+            {
+                Debug.Log("Mission failed!");
+                TEMP_gameover = true;
+            }
+        }
     }
 
-    void DebugTileFlashing() {
+    void DebugTileFlashing()
+    {
         randomCountdown -= Time.deltaTime;
         if (randomCountdown <= 0)
         {
@@ -197,5 +215,35 @@ public class TacticalController : MonoBehaviour
             return;
         }
         chara.BeginMove(destination);
+    }
+
+    // TODO: Make a dynamic mission success determiner
+    // For now, assume all missions require one side to be unconscious
+    private bool isMissionSuccess()
+    {
+        foreach (Character chara in map.charactersByAllegiance[2])
+        {    // Assume allegiance 2 are the baddies for now
+            if (chara.healthState == HealthState.CONCSCIOUS)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // TODO: Make a dynamic mission success determiner
+    // For now, assume all missions require good guys to survive
+    private bool isMissionFailure()
+    {
+        foreach (Character chara in map.charactersByAllegiance[1])
+        {    // Assume allegiance 1 are the goodies for now
+            if (chara.healthState == HealthState.CONCSCIOUS)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
