@@ -82,6 +82,7 @@ public class Map {
             allies.Add(chara);
         } else {
             allies = new List<Character>();
+            allies.Add(chara);
             charactersByAllegiance.Add(chara.allegiance, allies);
         }
 

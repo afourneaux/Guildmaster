@@ -29,6 +29,10 @@ public class LootBehaviour {
 
         Dictionary<Treasure, int> weightByTreasure = new Dictionary<Treasure, int>();
         foreach (Treasure option in chara.noticedTreasure) {
+            if (option.tile.character != null && option.tile.character.allegiance != chara.allegiance) {
+                // Don't try to loot something currently being stood on by an enemy
+                continue;
+            } 
             // Set baseline
             float workingWeight = 100f;
 
@@ -74,6 +78,13 @@ public class LootBehaviour {
 
             // Is the treasure still valid?
             if (treasure.tile == null) {
+                chara.variables.Remove("loot_target");
+                chara.currentBehaviour = "deciding";
+                return;
+            }
+
+            // Is the treasure blocked by an enemy?
+            if (treasure.tile.character != null && treasure.tile.character.allegiance != chara.allegiance) {
                 chara.variables.Remove("loot_target");
                 chara.currentBehaviour = "deciding";
                 return;
