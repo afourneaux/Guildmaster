@@ -25,35 +25,20 @@ public class TacticalController : MonoBehaviour
         // Generate some sample characters with sample data (TODO: This data should come from the strategic layer)
         Character chara1 = new Character("Crimble Nottsworth", map.GetTileAt(0, 0), 1);
         Character chara2 = new Character("Zachary Nottingham", map.GetTileAt(0, map.height / 2), 1);
-        Character chara3 = new Character("Dwayne \"The Rock\" Johnson", map.GetTileAt(0, map.height - 1), 1);
+        Character chara3 = new Character("Duane \"The Jock\" Ronson", map.GetTileAt(0, map.height - 1), 1);
         chara1.SetStats(10, 10, 10, 10, 10, 10, 10, 100);
         chara2.SetStats(50, 5, 100, 30, 15, 5, 5, 30);
         chara3.SetStats(30, 15, 30, 20, 5, 10, 10, 50);
-        // TODO: Register components rather than every single behaviour
-        chara1.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
-        chara1.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
-        //chara1.RegisterAIBehaviour("teleport", WanderBehaviour.Teleport, WanderBehaviour.WeighTeleport);
-        chara1.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
-        chara1.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
-        chara1.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
-        chara1.RegisterAIBehaviour("loot", LootBehaviour.Loot, LootBehaviour.WeighLoot);
-        chara1.RegisterOnUpdate(CombatBehaviour.UpdateCombatAwareness);
-        chara2.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
-        chara2.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
-        chara2.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
-        chara2.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
-        chara2.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
-        chara2.RegisterAIBehaviour("loot", LootBehaviour.Loot, LootBehaviour.WeighLoot);
-        chara2.RegisterOnUpdate(CombatBehaviour.UpdateCombatAwareness);
-        chara3.RegisterAIBehaviour("wander", WanderBehaviour.Wander, WanderBehaviour.WeighWander);
-        chara3.RegisterAIBehaviour("rest", WanderBehaviour.Rest, WanderBehaviour.WeighRest);
-        chara3.RegisterAIBehaviour("teleport", WanderBehaviour.Teleport, WanderBehaviour.WeighTeleport);
-        chara3.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
+        WanderBehaviour.Register(chara1, true);
+        WanderBehaviour.Register(chara2);
+        WanderBehaviour.Register(chara3, true);
         chara3.UnregisterAIBehaviour("teleport"); // Test: Only chara1 should teleport
-        chara3.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
-        chara3.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
-        chara3.RegisterAIBehaviour("loot", LootBehaviour.Loot, LootBehaviour.WeighLoot);
-        chara3.RegisterOnUpdate(CombatBehaviour.UpdateCombatAwareness);
+        LootBehaviour.Register(chara1);
+        LootBehaviour.Register(chara2);
+        LootBehaviour.Register(chara3);
+        CombatBehaviour.Register(chara1);
+        CombatBehaviour.Register(chara2);
+        CombatBehaviour.Register(chara3);
         chara1.sprite = chara2.sprite = chara3.sprite = "knight";
         chara1.allegiance = chara2.allegiance = chara3.allegiance = 1;
         map.PlaceCharacter(chara1);
@@ -66,9 +51,7 @@ public class TacticalController : MonoBehaviour
         knifey.SetStats(10, 20, 10, 100, 2, 2, 10, 0);
         knifey.sprite = "knifer";
         knifey.allegiance = 2;
-        knifey.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
-        knifey.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
-        knifey.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
+        CombatBehaviour.Register(knifey);
         map.PlaceCharacter(knifey);
 
         // Generate some sample colours (Should eventually come from whatever file generates the map)

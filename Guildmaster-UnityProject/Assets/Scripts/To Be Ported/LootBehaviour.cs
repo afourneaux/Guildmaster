@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class LootBehaviour {
     // Characters with this behaviour will seek and collect loot
+    public static void Register(Character chara) {
+        chara.RegisterAIBehaviour("loot", LootBehaviour.Loot, LootBehaviour.WeighLoot);
+
+    }
 
     public static void WeighLoot(Character chara) {
         if (chara.AIWeights.ContainsKey("loot")) {

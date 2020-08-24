@@ -14,6 +14,13 @@ public class CombatBehaviour {
 
     static float DEFAULT_RANGE = 1.5f;
 
+    public static void Register(Character chara) {
+        chara.RegisterAIBehaviour("target", CombatBehaviour.Target, CombatBehaviour.WeighTarget);
+        chara.RegisterAIBehaviour("reposition", CombatBehaviour.Reposition, CombatBehaviour.WeighReposition);
+        chara.RegisterAIBehaviour("attack", CombatBehaviour.Attack, CombatBehaviour.WeighAttack);
+        chara.RegisterOnUpdate(CombatBehaviour.UpdateCombatAwareness);
+    }
+
     public static void WeighTarget(Character chara) {
         if (chara.AIWeights.ContainsKey("target")) {
             // Should we allow this, and overwrite the previous value?
