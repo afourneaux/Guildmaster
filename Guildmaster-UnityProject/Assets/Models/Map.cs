@@ -5,8 +5,13 @@ public class Map {
     public List<Character> characters;  // The index of this list is used for logic, DO NOT REMOVE FROM THIS LIST (TODO: Convert to Dictionary<int, Character> so we can preserve indices on remove)
     public Dictionary<int, List<Character>> charactersByAllegiance;
     public Dictionary<int, Colour> allegianceColours;
+    public List<Treasure> treasure;
 
     public Action<Tile> onTileGraphicChanged {
+        get; 
+        protected set;
+    }
+    public Action<Treasure> onTreasureGraphicChanged {
         get; 
         protected set;
     }
@@ -44,6 +49,7 @@ public class Map {
         characters = new List<Character>();
         allegianceColours = new Dictionary<int, Colour>();
         charactersByAllegiance = new Dictionary<int, List<Character>>();
+        treasure = new List<Treasure>();
 
         Random rand = new Random(); // Temporary
 
@@ -82,12 +88,51 @@ public class Map {
         return true;
     }
 
+    // TODO: Will become more complicated with more varied treasure (items, weapons, key items, etc)
+    public Treasure PlaceTreasure(int gp, int x, int y) {
+        Tile tile = GetTileAt(x, y);
+        if (tile == null) {
+            return null;
+        }
+
+        Treasure treas = new Treasure(gp, "Loot", tile);
+        tile.AddTreasure(treas);
+        treasure.Add(treas);
+        return treas;
+    }
+
+    public Treasure PlaceTreasure(Treasure treas, int x, int y) {
+        Tile tile = GetTileAt(x, y);
+        if (tile == null) {
+            return null;
+        }
+        treas.tile = tile;
+        tile.AddTreasure(treas);
+        treasure.Add(treas);
+        return treas;
+    }
+
+    public bool RemoveTreasure(Treasure treas) {
+        if (treasure.Contains(treas) == false) {
+            return false;
+        }
+        treasure.Remove(treas);
+        return treas.RemoveFromTile();
+    }
+
     public void RegisterTileGraphicChangedCallback(Action<Tile> callback) {
         onTileGraphicChanged += callback;
     }
 
     public void UnregisterTileGraphicChangedCallback(Action<Tile> callback) {
         onTileGraphicChanged -= callback;
+    }
+    public void RegisterTreasureGraphicChangedCallback(Action<Treasure> callback) {
+        onTreasureGraphicChanged += callback;
+    }
+
+    public void UnregisterTreasureGraphicChangedCallback(Action<Treasure> callback) {
+        onTreasureGraphicChanged -= callback;
     }
     public void RegisterCharacterGraphicChangedCallback(Action<Character> callback) {
         onCharacterGraphicChanged += callback;

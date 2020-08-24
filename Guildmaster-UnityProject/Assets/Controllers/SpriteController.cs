@@ -13,6 +13,7 @@ public class SpriteController : MonoBehaviour
 {
     Dictionary<string, Sprite> spritesMap;
     Dictionary<Tile, GameObject> tileGOMap;
+    Dictionary<Treasure, GameObject> treasureGOMap;
     Dictionary<Character, GameObject> characterGOMap;
 
     Vector2 HP_POS = new Vector2(0, 0.5f);
@@ -20,27 +21,24 @@ public class SpriteController : MonoBehaviour
 
     void Start() {
         tileGOMap = new Dictionary<Tile, GameObject>();
+        treasureGOMap = new Dictionary<Treasure, GameObject>();
         characterGOMap = new Dictionary<Character, GameObject>();
         Map map = TacticalController.instance.map;
 
         LoadSprites();
         map.RegisterTileGraphicChangedCallback(OnTileGraphicChanged);
+        map.RegisterTreasureGraphicChangedCallback(OnTreasureGraphicChanged);
         map.RegisterCharacterGraphicChangedCallback(OnCharacterGraphicChanged);
         Camera.main.transform.position = new Vector3(map.width / 2, map.height / 2, Camera.main.transform.position.z);
 
         // Create and draw game objects for each tile in the map
         for (int x = 0; x < map.width; x++) {
             for (int y = 0; y < map.height; y++) {
-                GameObject tileGO = new GameObject();
-                tileGO.name = "Tile_" + x + "_" + y;
-                tileGO.transform.position = new Vector3(x, y, 0);
-                tileGO.transform.SetParent(this.transform, true);
-                SpriteRenderer tileSR = tileGO.AddComponent<SpriteRenderer>();
-                tileSR.sortingLayerName = "TileMap";
-
-                tileGOMap.Add(map.GetTileAt(x, y), tileGO);
-
-                OnTileGraphicChanged(map.GetTileAt(x, y));
+                Tile tile = map.GetTileAt(x, y);
+                CreateTile(tile);
+                foreach (Treasure treasure in tile.treasure) {
+                    CreateTreasure(treasure);
+                }
             }
         }
 
@@ -67,12 +65,34 @@ public class SpriteController : MonoBehaviour
         }
 
         // TODO: Get sprite based on spritesheet and index
-        string spriteName = tile.sprite == 0 ? "BlankTile" : "EmptyTile"; // test
+        string spriteName = tile.sprite == 0 ? "BlankTile" : "EmptyTile"; // TODO: Spritesheets
         Sprite sprite;
         if (spritesMap.TryGetValue(spriteName, out sprite) == false) {
             Debug.LogError("SpriteController::OnTileGraphicChanged - Sprite not found: " + spriteName);
         }
         tileGO.GetComponent<SpriteRenderer>().sprite = sprite;
+    }
+
+    void OnTreasureGraphicChanged(Treasure treasure) {
+        GameObject treasureGO;
+        if (treasureGOMap.TryGetValue(treasure, out treasureGO) == false) {
+            // This is a new treasure object, perhaps dropped from an event or character
+            CreateTreasure(treasure);
+            return;
+        }
+        
+        if (treasure.tile == null || treasure.getNoticedBy().Count == 0) {
+            // The treasure is not on the ground or has not been found. Do not display.
+            treasureGO.GetComponent<SpriteRenderer>().enabled = false;
+        } else {
+            treasureGO.transform.position = new Vector3(treasure.tile.x, treasure.tile.y, 0);
+            treasureGO.GetComponent<SpriteRenderer>().enabled = true;
+            Sprite sprite;
+            if (spritesMap.TryGetValue(treasure.sprite, out sprite) == false) {
+                Debug.LogError("SpriteController::OnTreasureGraphicChanged - Sprite not found: " + treasure.sprite);
+            }
+            treasureGO.GetComponent<SpriteRenderer>().sprite = sprite;
+        }
     }
 
     void OnCharacterGraphicChanged(Character chara) {
@@ -112,6 +132,32 @@ public class SpriteController : MonoBehaviour
         hpGreenGO.transform.localScale = new Vector3(Math.Max(0, HP_SIZE.x * ((float)chara.HP / (float)chara.constitution)), HP_SIZE.y, 0);
         GameObject hpRedGO = hpGO.transform.Find(charaGO.name + "_HP_Red").gameObject;
         hpRedGO.GetComponent<SpriteRenderer>().sprite = hpRedSprite;
+    }
+
+    void CreateTile(Tile tile) {
+        GameObject tileGO = new GameObject();
+        tileGO.name = "Tile_" + tile.x + "_" + tile.y;
+        tileGO.transform.position = new Vector3(tile.x, tile.y, 0);
+        tileGO.transform.SetParent(this.transform, true);
+        SpriteRenderer tileSR = tileGO.AddComponent<SpriteRenderer>();
+        tileSR.sortingLayerName = "TileMap";
+
+        tileGOMap.Add(tile, tileGO);
+
+        OnTileGraphicChanged(tile);
+    }
+
+    void CreateTreasure(Treasure treasure) {
+        GameObject treasureGO = new GameObject();
+        treasureGO.name = "Treasure_gp_" + treasure.gp;
+        treasureGO.transform.position = new Vector3(treasure.tile.x, treasure.tile.y, 0);
+        treasureGO.transform.SetParent(this.transform, true);
+        SpriteRenderer treasureSR = treasureGO.AddComponent<SpriteRenderer>();
+        treasureSR.sortingLayerName = "Items";
+
+        treasureGOMap.Add(treasure, treasureGO);
+
+        OnTreasureGraphicChanged(treasure);
     }
 
     // This effectively replaces grabbing a prefab
