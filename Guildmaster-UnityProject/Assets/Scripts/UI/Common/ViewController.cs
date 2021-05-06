@@ -28,6 +28,11 @@ public class ViewController : MonoBehaviour
         set { source = value; }  // set method
     }
 
+    void Awake()
+    {
+        Intialize();
+        IntializeAsync();
+    }
     protected virtual void Intialize()
     {
 
