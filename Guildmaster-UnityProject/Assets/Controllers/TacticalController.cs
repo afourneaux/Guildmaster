@@ -71,7 +71,7 @@ public class TacticalController : MonoBehaviour
     void Update()
     {
         // test updating tile sprites
-        DebugTileFlashing();
+        //DebugTileFlashing();
 
         // Update each character
         foreach (Character chara in map.characters)
